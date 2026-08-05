@@ -23,7 +23,7 @@ try {
 
     if (!$trip) {
         http_response_code(404);
-        echo '<!DOCTYPE html><html><head><title>' . t('tours.not_found_title') . '</title><link rel="stylesheet" href="styles.css"></head><body>';
+echo '<!DOCTYPE html><html><head><title>' . t('tours.not_found_title') . '</title><link rel="stylesheet" href="/weroad/styles.css"></head><body>';
         echo '<div class="wrap" style="padding:80px 0;text-align:center;"><h1>' . t('tours.not_found_title') . '</h1><p style="color:var(--muted);">' . t('tours.not_found_text') . '</p><a class="btn btn-primary" href="' . gaia_url('search.php', '../') . '" style="margin-top:20px;">' . t('tours.browse_trips') . '</a></div>';
         echo '</body></html>';
         exit;
@@ -84,7 +84,7 @@ $pageTitle = $trip['name'] . ' — GAIA Tours';
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700;800&family=Inter:wght@400;500;600;700&family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 <link rel="stylesheet" href="/assets/gaia.css">
-<link rel="stylesheet" href="styles.css">
+<link rel="stylesheet" href="/weroad/styles.css">
 </head>
 <body>
 
@@ -264,6 +264,6 @@ require __DIR__ . '/../components/gaia-header.php';
 <?php require __DIR__ . '/../components/gaia-footer.php'; ?>
 
 <script src="/assets/gaia.js"></script>
-<script src="script.js"></script>
+<script src="/weroad/script.js"></script>
 </body>
 </html>

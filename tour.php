@@ -38,6 +38,15 @@ if (!$trip) {
     $is404 = false;
     $tripId = (int)$trip['id'];
 
+    // Localized trip fields
+    $tripName = lang_value($trip, 'name', 'Tour');
+    $tripTagline = lang_value($trip, 'tagline', '');
+    $tripDesc = lang_value($trip, 'description', '');
+    $tripAge = lang_value($trip, 'age_range', '18–39');
+    $tripEffort = lang_value($trip, 'effort_level', 'moderate');
+    $tripComfort = lang_value($trip, 'comfort_level', 'Standard');
+    $tripAccom = lang_value($trip, 'accommodation', 'Shared rooms');
+
     // Gallery
     $gallery = $trip['gallery_urls'] !== null
         ? array_filter(array_map('trim', explode(',', $trip['gallery_urls'])))
@@ -81,7 +90,10 @@ if (!$trip) {
     $faqStmt->execute([':id' => $tripId]);
     $faqGroups = [];
     foreach ($faqStmt->fetchAll() as $faq) {
-        $faqGroups[$faq['faq_group']][] = $faq;
+        $groupName = lang_value($faq, 'faq_group', $faq['faq_group']);
+        $faq['question_display'] = lang_value($faq, 'question', $faq['question']);
+        $faq['answer_display'] = lang_value($faq, 'answer', $faq['answer']);
+        $faqGroups[$groupName][] = $faq;
     }
 
     // Related tours (same category, excluding current)
@@ -95,9 +107,9 @@ if (!$trip) {
 
 // Dynamic SEO
 if (!$is404) {
-    $seoTitle = ($trip['name'] ?? 'Tour') . ' — GAIA TOURS & TRAVEL';
-    $seoDesc  = mb_strimwidth(strip_tags($trip['tagline'] ?: $trip['description'] ?: ''), 0, 150, '…');
-    $seoImage = $gallery[0];
+    $seoTitle = $tripName . ' — GAIA TOURS & TRAVEL';
+    $seoDesc  = mb_strimwidth(strip_tags($tripTagline ?: $tripDesc ?: ''), 0, 150, '…');
+    $seoImage = $gallery[0] ?? '';
 } else {
     $seoTitle = t('detail.not_found', 'Not Found') . ' — GAIA TOURS & TRAVEL';
     $seoDesc  = t('detail.not_found_text', 'The page you are looking for does not exist.');
@@ -272,14 +284,14 @@ $whatsapp = htmlspecialchars(site_setting('contact_whatsapp', '962790123456'));
         <span class="sep">/</span>
         <a href="<?= gaia_url('weroad/search.php') ?>"><?= t('detail.tours', 'Tours') ?></a>
         <span class="sep">/</span>
-        <span><?= htmlspecialchars($trip['name']) ?></span>
+        <span><?= htmlspecialchars($tripName) ?></span>
       </nav>
-      <h1><?= htmlspecialchars($trip['name']) ?></h1>
-      <?php if ($trip['tagline']): ?><p class="tagline"><?= htmlspecialchars($trip['tagline']) ?></p><?php endif; ?>
+      <h1><?= htmlspecialchars($tripName) ?></h1>
+      <?php if ($tripTagline): ?><p class="tagline"><?= htmlspecialchars($tripTagline) ?></p><?php endif; ?>
       <div class="hero-meta">
         <span class="pill"><span class="ratestars">★</span> <?= number_format((float)$trip['rating'], 1) ?> (<?= (int)$trip['reviews_count'] ?> <?= t('tour.reviews', 'Reviews') ?>)</span>
         <span class="pill"><i class="fa-regular fa-clock"></i> <?= t_fmt('tour.duration', ['days' => (int)$trip['duration_days']]) ?></span>
-        <span class="pill"><i class="fa-solid fa-signal"></i> <?= t_fmt('tour.difficulty', ['level' => htmlspecialchars($trip['effort_level'])]) ?></span>
+        <span class="pill"><i class="fa-solid fa-signal"></i> <?= t_fmt('tour.difficulty', ['level' => htmlspecialchars($tripEffort)]) ?></span>
         <span class="pill"><i class="fa-solid fa-user-group"></i> <?= t_fmt('tour.group_size', ['max' => (int)$trip['max_group_size']]) ?></span>
       </div>
     </div>
@@ -295,17 +307,17 @@ $whatsapp = htmlspecialchars(site_setting('contact_whatsapp', '962790123456'));
         <section class="section">
           <div class="section-head"><h2><?= t('tour.overview', 'Overview') ?></h2><div class="eyebrow"></div></div>
           <div class="fit-grid">
-            <div class="fit-row"><div class="ic"><i class="fa-solid fa-user"></i></div><div><b><?= t('tours.trip_age', 'Age range') ?></b><span><?= htmlspecialchars($trip['age_range']) ?></span></div></div>
-            <div class="fit-row"><div class="ic"><i class="fa-solid fa-bolt"></i></div><div><b><?= t('tours.trip_physical', 'Physical effort') ?></b><span><?= ucfirst(htmlspecialchars($trip['effort_level'])) ?></span></div></div>
-            <div class="fit-row"><div class="ic"><i class="fa-solid fa-house-chimney"></i></div><div><b><?= t('tours.trip_accommodation', 'Accommodation') ?></b><span><?= htmlspecialchars($trip['accommodation'] ?? 'Shared rooms') ?></span></div></div>
-            <div class="fit-row"><div class="ic"><i class="fa-solid fa-bed"></i></div><div><b><?= t('tours.trip_comfort', 'Comfort level') ?></b><span><?= htmlspecialchars($trip['comfort_level'] ?? 'Standard') ?></span></div></div>
+            <div class="fit-row"><div class="ic"><i class="fa-solid fa-user"></i></div><div><b><?= t('tours.trip_age', 'Age range') ?></b><span><?= htmlspecialchars($tripAge) ?></span></div></div>
+            <div class="fit-row"><div class="ic"><i class="fa-solid fa-bolt"></i></div><div><b><?= t('tours.trip_physical', 'Physical effort') ?></b><span><?= ucfirst(htmlspecialchars($tripEffort)) ?></span></div></div>
+            <div class="fit-row"><div class="ic"><i class="fa-solid fa-house-chimney"></i></div><div><b><?= t('tours.trip_accommodation', 'Accommodation') ?></b><span><?= htmlspecialchars($tripAccom) ?></span></div></div>
+            <div class="fit-row"><div class="ic"><i class="fa-solid fa-bed"></i></div><div><b><?= t('tours.trip_comfort', 'Comfort level') ?></b><span><?= htmlspecialchars($tripComfort) ?></span></div></div>
           </div>
         </section>
 
         <!-- Description -->
-        <?php if ($trip['description']): ?>
+        <?php if ($tripDesc): ?>
         <section class="section">
-          <p class="desc"><?= nl2br(htmlspecialchars($trip['description'])) ?></p>
+          <p class="desc"><?= nl2br(htmlspecialchars($tripDesc)) ?></p>
         </section>
         <?php endif; ?>
 
@@ -314,13 +326,14 @@ $whatsapp = htmlspecialchars(site_setting('contact_whatsapp', '962790123456'));
         <section class="section">
           <div class="section-head"><h2><?= t('tour.itinerary', 'Itinerary') ?></h2><div class="eyebrow"></div></div>
           <?php foreach ($itinerary as $day): ?>
+            <?php $dayTitle = lang_value($day, 'title', $day['title']); $dayDesc = lang_value($day, 'description', $day['description'] ?? ''); ?>
           <details class="day-card" <?= (int)$day['day_number'] === 1 ? 'open' : '' ?>>
             <summary>
               <?php if ($day['image_url']): ?><img class="thumb" src="<?= htmlspecialchars($day['image_url']) ?>" alt=""><?php endif; ?>
-              <div><span class="day-label"><?= t_fmt('tour.day', ['day' => (int)$day['day_number']]) ?></span><h4><?= htmlspecialchars($day['title']) ?></h4></div>
+              <div><span class="day-label"><?= t_fmt('tour.day', ['day' => (int)$day['day_number']]) ?></span><h4><?= htmlspecialchars($dayTitle) ?></h4></div>
               <i class="fa-solid fa-chevron-down chev"></i>
             </summary>
-            <div class="day-body"><?= nl2br(htmlspecialchars($day['description'])) ?></div>
+            <div class="day-body"><?= nl2br(htmlspecialchars($dayDesc)) ?></div>
           </details>
           <?php endforeach; ?>
         </section>
@@ -334,13 +347,13 @@ $whatsapp = htmlspecialchars(site_setting('contact_whatsapp', '962790123456'));
             <div class="included-col">
               <h4><?= t('tour.included', 'Included') ?></h4>
               <ul>
-                <?php foreach ($included as $item): ?><li class="yes"><i class="fa-solid fa-circle-check"></i> <?= htmlspecialchars($item['item_text']) ?></li><?php endforeach; ?>
+                <?php foreach ($included as $item): ?><li class="yes"><i class="fa-solid fa-circle-check"></i> <?= htmlspecialchars(lang_value($item, 'item_text')) ?></li><?php endforeach; ?>
               </ul>
             </div>
             <div class="included-col">
               <h4><?= t('tour.excluded', 'Not included') ?></h4>
               <ul>
-                <?php foreach ($excluded as $item): ?><li class="no"><i class="fa-solid fa-circle-xmark"></i> <?= htmlspecialchars($item['item_text']) ?></li><?php endforeach; ?>
+                <?php foreach ($excluded as $item): ?><li class="no"><i class="fa-solid fa-circle-xmark"></i> <?= htmlspecialchars(lang_value($item, 'item_text')) ?></li><?php endforeach; ?>
               </ul>
             </div>
           </div>
@@ -353,7 +366,7 @@ $whatsapp = htmlspecialchars(site_setting('contact_whatsapp', '962790123456'));
           <div class="section-head"><h2><?= t('tour.gallery', 'Gallery') ?></h2><div class="eyebrow"></div></div>
           <div class="gallery-grid">
             <?php foreach ($gallery as $i => $img): ?>
-              <img src="<?= htmlspecialchars($img) ?>" alt="<?= htmlspecialchars($trip['name']) ?> — <?= $i + 1 ?>" loading="lazy">
+              <img src="<?= htmlspecialchars($img) ?>" alt="<?= htmlspecialchars($tripName) ?> — <?= $i + 1 ?>" loading="lazy">
             <?php endforeach; ?>
           </div>
         </section>
@@ -364,8 +377,9 @@ $whatsapp = htmlspecialchars(site_setting('contact_whatsapp', '962790123456'));
         <section class="section">
           <div class="section-head"><h2><?= t('tour.optional', 'Optional Activities') ?></h2><div class="eyebrow"></div></div>
           <?php foreach ($activities as $a): ?>
+            <?php $actName = lang_value($a, 'name', $a['name']); $actDesc = lang_value($a, 'description', $a['description'] ?? ''); ?>
             <div class="act-item">
-              <div><h4><?= htmlspecialchars($a['name']) ?></h4><?php if ($a['description']): ?><p><?= htmlspecialchars($a['description']) ?></p><?php endif; ?></div>
+              <div><h4><?= htmlspecialchars($actName) ?></h4><?php if ($actDesc): ?><p><?= htmlspecialchars($actDesc) ?></p><?php endif; ?></div>
               <span class="price"><?= t_fmt('tour.optional_price', ['price' => number_format((float)$a['price'], 0)]) ?></span>
             </div>
           <?php endforeach; ?>
@@ -394,10 +408,11 @@ $whatsapp = htmlspecialchars(site_setting('contact_whatsapp', '962790123456'));
           <div class="section-head"><h2><?= t('tour.reviews_title', 'What travellers say') ?></h2><div class="eyebrow"></div></div>
           <div class="reviews-grid">
             <?php foreach ($reviews as $r): ?>
+              <?php $rAuthor = lang_value($r, 'author', $r['author']); $rText = lang_value($r, 'text', $r['text']); ?>
               <div class="review-card">
                 <div class="stars"><?= str_repeat('★', (int)$r['rating']) ?></div>
-                <h5><?= htmlspecialchars($r['author']) ?></h5>
-                <p><?= htmlspecialchars($r['text']) ?></p>
+                <h5><?= htmlspecialchars($rAuthor) ?></h5>
+                <p><?= htmlspecialchars($rText) ?></p>
               </div>
             <?php endforeach; ?>
           </div>
@@ -411,7 +426,7 @@ $whatsapp = htmlspecialchars(site_setting('contact_whatsapp', '962790123456'));
           <?php foreach ($faqGroups as $groupName => $groupFaqs): ?>
             <h5 style="font-size:15px;margin:6px 0 10px;"><?= htmlspecialchars($groupName) ?></h5>
             <?php foreach ($groupFaqs as $faq): ?>
-              <details class="faq-item"><summary><?= htmlspecialchars($faq['question']) ?> <i class="fa-solid fa-plus"></i></summary><div class="faq-body"><?= nl2br(htmlspecialchars($faq['answer'])) ?></div></details>
+              <details class="faq-item"><summary><?= htmlspecialchars($faq['question_display']) ?> <i class="fa-solid fa-plus"></i></summary><div class="faq-body"><?= nl2br(htmlspecialchars($faq['answer_display'])) ?></div></details>
             <?php endforeach; ?>
           <?php endforeach; ?>
         </section>
@@ -453,9 +468,9 @@ $whatsapp = htmlspecialchars(site_setting('contact_whatsapp', '962790123456'));
       <div class="tour-row">
         <?php foreach ($relatedTours as $rt): ?>
         <a class="tour-card" href="<?= gaia_url('tour.php') ?>?slug=<?= urlencode($rt['slug']) ?>">
-          <div class="media"><img src="<?= htmlspecialchars($rt['image_url']) ?>" alt="<?= htmlspecialchars($rt['name']) ?>" loading="lazy"></div>
+          <div class="media"><img src="<?= htmlspecialchars($rt['image_url']) ?>" alt="<?= htmlspecialchars(lang_value($rt, 'name')) ?>" loading="lazy"></div>
           <div class="body">
-            <h3><?= htmlspecialchars($rt['name']) ?></h3>
+            <h3><?= htmlspecialchars(lang_value($rt, 'name')) ?></h3>
             <span class="price"><?= t('tour.from', 'From') ?> $<?= number_format((float)$rt['base_price'], 0) ?></span>
           </div>
         </a>

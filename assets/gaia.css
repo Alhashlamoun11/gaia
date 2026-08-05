@@ -976,8 +976,15 @@ html[dir="rtl"] .adv-card {
 
 /* ---- Mobile menu RTL ---- */
 html[dir="rtl"] .gaia-mobile-menu {
-    left: auto;
-    right: 0;
+    left: -100%;
+    right: auto;
+    transition: left .3s ease;
+    box-shadow: 8px 0 30px rgba(0, 0, 0, .15);
+}
+
+html[dir="rtl"] .gaia-mobile-menu.open {
+    left: 0;
+    right: auto;
 }
 
 html[dir="rtl"] .gaia-mobile-menu-head {

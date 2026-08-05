@@ -91,10 +91,39 @@ function rewrite($path, $query)
         $query['lang'] = $m[1];
         return ['checkout.php', $query];
     }
-    if (preg_match('#^/(en|ar)/(about|contact)$#', $p, $m)) {
+if (preg_match('#^/(en|ar)/(about|contact)$#', $p, $m)) {
         $query['lang'] = $m[1];
         $query['slug'] = $m[2];
         return ['page.php', $query];
+    }
+    // Auth & account (language-prefixed)
+    if (preg_match('#^/(en|ar)/login$#', $p, $m)) {
+        $query['lang'] = $m[1];
+        return ['login.php', $query];
+    }
+    if (preg_match('#^/(en|ar)/register$#', $p, $m)) {
+        $query['lang'] = $m[1];
+        return ['register.php', $query];
+    }
+    if (preg_match('#^/(en|ar)/forgot-password$#', $p, $m)) {
+        $query['lang'] = $m[1];
+        return ['forgot-password.php', $query];
+    }
+    if (preg_match('#^/(en|ar)/reset-password$#', $p, $m)) {
+        $query['lang'] = $m[1];
+        return ['reset-password.php', $query];
+    }
+    if (preg_match('#^/(en|ar)/logout$#', $p, $m)) {
+        $query['lang'] = $m[1];
+        return ['logout.php', $query];
+    }
+    if (preg_match('#^/(en|ar)/account/(profile|my-bookings|claim-booking)$#', $p, $m)) {
+        $query['lang'] = $m[1];
+        return ['account/' . $m[2] . '.php', $query];
+    }
+    if (preg_match('#^/(en|ar)/account$#', $p, $m)) {
+        $query['lang'] = $m[1];
+        return ['account/index.php', $query];
     }
     // Homepage with language prefix
     if (preg_match('#^/(en|ar)$#', $p, $m)) {
@@ -142,6 +171,28 @@ function rewrite($path, $query)
     if ($p === '/contact') {
         $query['slug'] = 'contact';
         return ['page.php', $query];
+    }
+    // Auth & account (non-prefixed, default English)
+    if ($p === '/login') {
+        return ['login.php', $query];
+    }
+    if ($p === '/register') {
+        return ['register.php', $query];
+    }
+    if ($p === '/forgot-password') {
+        return ['forgot-password.php', $query];
+    }
+    if ($p === '/reset-password') {
+        return ['reset-password.php', $query];
+    }
+    if ($p === '/logout') {
+        return ['logout.php', $query];
+    }
+    if (preg_match('#^/account/(profile|my-bookings|claim-booking)$#', $p, $m)) {
+        return ['account/' . $m[1] . '.php', $query];
+    }
+    if ($p === '/account') {
+        return ['account/index.php', $query];
     }
     // Anchor sections that live on the platform home page
     if ($p === '/reviews' || $p === '/hotels') {

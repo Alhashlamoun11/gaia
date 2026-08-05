@@ -38,6 +38,11 @@ if (!$room) {
     $is404 = false;
     $roomId = (int)$room['id'];
 
+    // Localized room fields
+    $roomName = lang_value($room, 'name', 'Room');
+    $roomDesc = lang_value($room, 'description', '');
+    $roomBeds = lang_value($room, 'beds', '');
+
     // Gallery
     $gallery = $room['gallery_urls'] !== null
         ? array_filter(array_map('trim', explode(',', $room['gallery_urls'])))
@@ -49,9 +54,10 @@ if (!$room) {
         $gallery = ['https://images.unsplash.com/photo-1566665797739-1674de7a421a?w=900&q=80'];
     }
 
-    // Facilities (comma-separated)
-    $facilities = $room['facilities'] !== null
-        ? array_filter(array_map('trim', explode(',', $room['facilities'])))
+    // Facilities (comma-separated, localized)
+    $facilitiesRaw = lang_value($room, 'facilities', $room['facilities'] ?? '');
+    $facilities = $facilitiesRaw !== ''
+        ? array_filter(array_map('trim', explode(',', $facilitiesRaw)))
         : [];
 
     // Hotel info
@@ -70,9 +76,9 @@ if (!$room) {
 
 // Dynamic SEO
 if (!$is404) {
-    $seoTitle = ($room['name'] ?? 'Room') . ' — GAIA TOURS & TRAVEL';
-    $seoDesc  = mb_strimwidth(strip_tags($room['description'] ?? ''), 0, 150, '…');
-    $seoImage = $gallery[0];
+    $seoTitle = $roomName . ' — GAIA TOURS & TRAVEL';
+    $seoDesc  = mb_strimwidth(strip_tags($roomDesc), 0, 150, '…');
+    $seoImage = $gallery[0] ?? '';
 } else {
     $seoTitle = t('detail.not_found', 'Not Found') . ' — GAIA TOURS & TRAVEL';
     $seoDesc  = t('detail.not_found_text', 'The page you are looking for does not exist.');
@@ -206,14 +212,14 @@ $whatsapp = htmlspecialchars(site_setting('contact_whatsapp', '962790123456'));
         <a href="<?= gaia_url('index.php') ?>"><?= t('detail.home', 'Home') ?></a>
         <span class="sep">/</span>
         <?php if ($hotel): ?>
-          <a href="<?= gaia_url('hotel.php') ?>?slug=<?= urlencode($hotel['slug']) ?>"><?= htmlspecialchars($hotel['name']) ?></a>
+          <a href="<?= gaia_url('hotel.php') ?>?slug=<?= urlencode($hotel['slug']) ?>"><?= htmlspecialchars(lang_value($hotel, 'name')) ?></a>
         <?php else: ?>
           <a href="<?= gaia_url('index.php') ?>"><?= t('detail.hotels', 'Hotels') ?></a>
         <?php endif; ?>
         <span class="sep">/</span>
-        <span><?= htmlspecialchars($room['name']) ?></span>
+        <span><?= htmlspecialchars($roomName) ?></span>
       </nav>
-      <h1><?= htmlspecialchars($room['name']) ?></h1>
+      <h1><?= htmlspecialchars($roomName) ?></h1>
       <span class="hero-price">
         <span class="amount"><?= $currency ?><?= number_format((float)$room['price'], 0) ?></span>
         <span class="per"><?= t('room.per_night', '/ night') ?></span>
@@ -231,7 +237,7 @@ $whatsapp = htmlspecialchars(site_setting('contact_whatsapp', '962790123456'));
         <section class="section">
           <div class="spec-grid">
             <div class="spec-item"><i class="fa-solid fa-user-group"></i><b><?= (int)$room['capacity'] ?></b><span><?= t('room.capacity', 'Capacity') ?></span></div>
-            <div class="spec-item"><i class="fa-solid fa-bed"></i><b><?= htmlspecialchars($room['beds']) ?></b><span><?= t('room.beds', 'Beds') ?></span></div>
+            <div class="spec-item"><i class="fa-solid fa-bed"></i><b><?= htmlspecialchars($roomBeds) ?></b><span><?= t('room.beds', 'Beds') ?></span></div>
             <?php if (!empty($room['size_sqm'])): ?>
             <div class="spec-item"><i class="fa-solid fa-ruler-combined"></i><b><?= (int)$room['size_sqm'] ?> m²</b><span><?= t('room.size', 'Room Size') ?></span></div>
             <?php endif; ?>
@@ -241,7 +247,7 @@ $whatsapp = htmlspecialchars(site_setting('contact_whatsapp', '962790123456'));
         <!-- Description -->
         <section class="section">
           <div class="section-head"><h2><?= t('room.description', 'About this Room') ?></h2><div class="eyebrow"></div></div>
-          <?php if ($room['description']): ?><p class="desc"><?= nl2br(htmlspecialchars($room['description'])) ?></p><?php endif; ?>
+          <?php if ($roomDesc): ?><p class="desc"><?= nl2br(htmlspecialchars($roomDesc)) ?></p><?php endif; ?>
         </section>
 
         <!-- Facilities -->
@@ -262,7 +268,7 @@ $whatsapp = htmlspecialchars(site_setting('contact_whatsapp', '962790123456'));
           <div class="section-head"><h2><?= t('room.gallery', 'Room Gallery') ?></h2><div class="eyebrow"></div></div>
           <div class="gallery-grid">
             <?php foreach ($gallery as $i => $img): ?>
-              <img src="<?= htmlspecialchars($img) ?>" alt="<?= htmlspecialchars($room['name']) ?> — <?= $i + 1 ?>" loading="lazy">
+              <img src="<?= htmlspecialchars($img) ?>" alt="<?= htmlspecialchars($roomName) ?> — <?= $i + 1 ?>" loading="lazy">
             <?php endforeach; ?>
           </div>
         </section>
@@ -270,14 +276,15 @@ $whatsapp = htmlspecialchars(site_setting('contact_whatsapp', '962790123456'));
 
         <!-- Hotel info -->
         <?php if ($hotel): ?>
+        <?php $hotelName = lang_value($hotel, 'name'); $hotelDesc = lang_value($hotel, 'description'); ?>
         <section class="section">
           <div class="section-head"><h2><?= t('room.hotel_info', 'The Hotel') ?></h2><div class="eyebrow"></div></div>
           <a class="hotel-card" href="<?= gaia_url('hotel.php') ?>?slug=<?= urlencode($hotel['slug']) ?>">
-            <?php if ($hotel['image_url']): ?><img src="<?= htmlspecialchars($hotel['image_url']) ?>" alt="<?= htmlspecialchars($hotel['name']) ?>" loading="lazy"><?php endif; ?>
+            <?php if ($hotel['image_url']): ?><img src="<?= htmlspecialchars($hotel['image_url']) ?>" alt="<?= htmlspecialchars($hotelName) ?>" loading="lazy"><?php endif; ?>
             <div class="body">
-              <h3><?= htmlspecialchars($hotel['name']) ?></h3>
+              <h3><?= htmlspecialchars($hotelName) ?></h3>
               <div class="stars"><?= str_repeat('★', (int)$hotel['star_rating']) ?></div>
-              <?php if ($hotel['description']): ?><p><?= mb_strimwidth(strip_tags($hotel['description']), 0, 120, '…') ?></p><?php endif; ?>
+              <?php if ($hotelDesc): ?><p><?= mb_strimwidth(strip_tags($hotelDesc), 0, 120, '…') ?></p><?php endif; ?>
               <span class="gaia-btn gaia-btn-sm" style="pointer-events:none;"><?= t('hotel.view_room', 'View Hotel') ?></span>
             </div>
           </a>
@@ -291,9 +298,9 @@ $whatsapp = htmlspecialchars(site_setting('contact_whatsapp', '962790123456'));
           <div class="rooms-row">
             <?php foreach ($relatedRooms as $rr): ?>
             <a class="room-card" href="<?= gaia_url('room.php') ?>?id=<?= (int)$rr['id'] ?>">
-              <div class="media"><img src="<?= htmlspecialchars($rr['image_url']) ?>" alt="<?= htmlspecialchars($rr['name']) ?>" loading="lazy"></div>
+              <div class="media"><img src="<?= htmlspecialchars($rr['image_url']) ?>" alt="<?= htmlspecialchars(lang_value($rr, 'name')) ?>" loading="lazy"></div>
               <div class="body">
-                <h3><?= htmlspecialchars($rr['name']) ?></h3>
+                <h3><?= htmlspecialchars(lang_value($rr, 'name')) ?></h3>
                 <span class="price"><?= $currency ?><?= number_format((float)$rr['price'], 0) ?> <small style="color:var(--muted);font-weight:400;">/ <?= t('room.per_night', 'night') ?></small></span>
               </div>
             </a>

@@ -73,6 +73,44 @@ function site_setting($key, $default = '')
 }
 
 // ------------------------------------------------------------
+// LOCALIZED CONTENT HELPER
+// ------------------------------------------------------------
+/**
+ * Return the localized value for a content field.
+ *
+ * If the current language is 'ar' and the row has a `{field}_ar`
+ * column with a non-empty value, return that. Otherwise fall back
+ * to the original (English) field.
+ *
+ * Usage:
+ *   $event['title']     = original (EN)
+ *   $event['title_ar']  = Arabic
+ *   lang_value($event, 'title')  ->  localized title
+ */
+function lang_value($row, $field, $fallback = '')
+{
+    $lang = gaia_current_lang();
+    if ($lang === 'ar' && isset($row[$field . '_ar'])) {
+        $arVal = trim((string)$row[$field . '_ar']);
+        if ($arVal !== '') {
+            return $arVal;
+        }
+    }
+    if (isset($row[$field]) && trim((string)$row[$field]) !== '') {
+        return $row[$field];
+    }
+    return $fallback;
+}
+
+/**
+ * Return a localized URL-safe optional value (falls back to EN slug).
+ */
+function lang_slug($row, $slugField = 'slug', $fallback = '')
+{
+    return lang_value($row, $slugField, $fallback);
+}
+
+// ------------------------------------------------------------
 // LANGUAGES / TRANSLATIONS
 // ------------------------------------------------------------
 function gaia_current_lang()

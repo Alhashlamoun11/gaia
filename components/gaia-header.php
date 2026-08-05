@@ -25,6 +25,19 @@ if (!function_exists('gaia_nav_items')) {
     require_once __DIR__ . '/gaia-config.php';
 }
 
+// ---- Authentication-aware header ----
+// Load auth helpers if not already available (guarded to avoid
+// breaking pages that don't include the auth stack).
+if (!function_exists('auth_check')) {
+    require_once __DIR__ . '/../auth/helpers.php';
+}
+// Resolve whether the current visitor is authenticated.
+$gaiaAuthed     = auth_check();
+$gaiaAuthUser   = $gaiaAuthed ? auth_user() : null;
+$gaiaAuthName   = $gaiaAuthed ? auth_name() : '';
+$gaiaAuthAvatar = $gaiaAuthed ? auth_avatar() : '';
+$gaiaAuthRole   = $gaiaAuthed ? auth_role() : 'guest';
+
 // Resolve defaults
 $gaia_base         = $gaia_base         ?? '';
 $gaia_active       = $gaia_active       ?? 'home';
@@ -80,9 +93,19 @@ function gaia_icon_account() {
       <a class="gaia-icon-btn gaia-whatsapp" href="https://wa.me/<?= htmlspecialchars($gaia_whatsapp) ?>" target="_blank" rel="noopener" title="<?= htmlspecialchars(t('header.whatsapp')) ?>">
         <?= gaia_icon_whatsapp() ?>
       </a>
-      <a class="gaia-header-account" href="<?= gaia_url('contact') ?>" title="<?= htmlspecialchars(t('header.account')) ?>">
-        <?= gaia_icon_account() ?><span><?= htmlspecialchars(t('header.account')) ?></span>
-      </a>
+<?php if ($gaiaAuthed): ?>
+        <a class="gaia-header-account" href="<?= gaia_url('account/index.php', $gaia_base) ?>" title="<?= htmlspecialchars(t('header.my_account')) ?>">
+          <img src="<?= htmlspecialchars($gaiaAuthAvatar) ?>" alt="" class="gaia-header-avatar">
+          <span><?= htmlspecialchars($gaiaAuthName) ?></span>
+        </a>
+      <?php else: ?>
+        <a class="gaia-header-account gaia-header-login" href="<?= gaia_url('login.php', $gaia_base) ?>">
+          <?= gaia_icon_account() ?><span><?= htmlspecialchars(t('auth.login')) ?></span>
+        </a>
+        <a class="gaia-header-account gaia-header-register" href="<?= gaia_url('register.php', $gaia_base) ?>">
+          <span><?= htmlspecialchars(t('auth.register')) ?></span>
+        </a>
+      <?php endif; ?>
     </div>
 
     <button class="gaia-burger" aria-label="Open menu" aria-expanded="false">
@@ -103,9 +126,15 @@ function gaia_icon_account() {
            href="<?= htmlspecialchars($item['url']) ?>"><?= htmlspecialchars($item['label']) ?></a>
       <?php endforeach; ?>
     </nav>
-    <div class="gaia-mobile-actions">
-      <a class="gaia-btn gaia-btn-block gaia-btn-ghost" href="<?= gaia_url('contact') ?>"><?= htmlspecialchars(t('header.account')) ?></a>
-      <a class="gaia-btn gaia-btn-block" href="<?= gaia_url('transfer-booking') ?>"><?= htmlspecialchars(t('header.start_booking')) ?></a>
+<div class="gaia-mobile-actions">
+      <?php if ($gaiaAuthed): ?>
+        <a class="gaia-btn gaia-btn-block gaia-btn-ghost" href="<?= gaia_url('account/my-bookings.php', $gaia_base) ?>"><?= htmlspecialchars(t('account.my_bookings')) ?></a>
+        <a class="gaia-btn gaia-btn-block gaia-btn-ghost" href="<?= gaia_url('account/index.php', $gaia_base) ?>"><?= htmlspecialchars(t('header.my_account')) ?></a>
+        <a class="gaia-btn gaia-btn-block" href="<?= gaia_url('logout.php', $gaia_base) ?>"><?= htmlspecialchars(t('auth.logout')) ?></a>
+      <?php else: ?>
+        <a class="gaia-btn gaia-btn-block gaia-btn-ghost" href="<?= gaia_url('login.php', $gaia_base) ?>"><?= htmlspecialchars(t('auth.login')) ?></a>
+        <a class="gaia-btn gaia-btn-block" href="<?= gaia_url('register.php', $gaia_base) ?>"><?= htmlspecialchars(t('auth.register')) ?></a>
+      <?php endif; ?>
     </div>
   </div>
   <div class="gaia-mobile-backdrop"></div>

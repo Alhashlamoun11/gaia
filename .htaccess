@@ -27,6 +27,24 @@ RewriteRule ^(en|ar)/events/([^/]+)/?$ events.php?lang=$1&slug=$2 [QSA,L]
 RewriteRule ^(en|ar)/hotels/([^/]+)/?$ hotel.php?lang=$1&slug=$2 [QSA,L]
 RewriteRule ^(en|ar)/rooms/([0-9]+)/?$ room.php?lang=$1&id=$2 [QSA,L]
 
+# --- Non-prefixed clean routes (defaults to English) ---
+RewriteRule ^tours/?$ weroad/search.php [QSA,L]
+RewriteRule ^tours/([^/]+)/?$ tour.php?slug=$1 [QSA,L]
+RewriteRule ^events/([^/]+)/?$ events.php?slug=$1 [QSA,L]
+RewriteRule ^hotels/([^/]+)/?$ hotel.php?slug=$1 [QSA,L]
+RewriteRule ^rooms/([0-9]+)/?$ room.php?id=$1 [QSA,L]
+RewriteRule ^destinations/?$ weroad/search.php?destinations=1 [QSA,L]
+RewriteRule ^gaia-night/?$ gaia-night.php [QSA,L]
+RewriteRule ^checkout/?$ checkout.php [QSA,L]
+RewriteRule ^transfer-booking/?$ route.php [QSA,L]
+RewriteRule ^transfers/?$ route.php [QSA,L]
+RewriteRule ^route/?$ route.php [QSA,L]
+RewriteRule ^about/?$ page.php?slug=about [QSA,L]
+RewriteRule ^contact/?$ page.php?slug=contact [QSA,L]
+RewriteRule ^reviews/?$ index.php [QSA,L]
+RewriteRule ^hotels/?$ index.php [QSA,L]
+RewriteRule ^events/?$ gaia-night.php [QSA,L]
+
 # --- Destinations ---
 RewriteRule ^(en|ar)/destinations/?$ weroad/search.php?lang=$1&destinations=1 [QSA,L]
 
@@ -47,6 +65,26 @@ RewriteRule ^(en|ar)/reviews/?$ index.php?lang=$1 [QSA,L]
 # --- About / Contact (CMS pages from `pages` table) ---
 RewriteRule ^(en|ar)/about/?$ page.php?lang=$1&slug=about [QSA,L]
 RewriteRule ^(en|ar)/contact/?$ page.php?lang=$1&slug=contact [QSA,L]
+
+# --- Authentication & Account (language-prefixed) ---
+RewriteRule ^(en|ar)/login/?$ login.php?lang=$1 [QSA,L]
+RewriteRule ^(en|ar)/register/?$ register.php?lang=$1 [QSA,L]
+RewriteRule ^(en|ar)/forgot-password/?$ forgot-password.php?lang=$1 [QSA,L]
+RewriteRule ^(en|ar)/reset-password/?$ reset-password.php?lang=$1 [QSA,L]
+RewriteRule ^(en|ar)/logout/?$ logout.php?lang=$1 [QSA,L]
+RewriteRule ^(en|ar)/account/?$ account/index.php?lang=$1 [QSA,L]
+RewriteRule ^(en|ar)/account/profile/?$ account/profile.php?lang=$1 [QSA,L]
+RewriteRule ^(en|ar)/account/my-bookings/?$ account/my-bookings.php?lang=$1 [QSA,L]
+RewriteRule ^(en|ar)/account/claim-booking/?$ account/claim-booking.php?lang=$1 [QSA,L]
+
+# --- Authentication & Account (clean, defaults to English) ---
+RewriteRule ^login/?$ login.php [QSA,L]
+RewriteRule ^register/?$ register.php [QSA,L]
+RewriteRule ^forgot-password/?$ forgot-password.php [QSA,L]
+RewriteRule ^reset-password/?$ reset-password.php [QSA,L]
+RewriteRule ^logout/?$ logout.php [QSA,L]
+RewriteRule ^account/(profile|my-bookings|claim-booking)/?$ account/$1.php [QSA,L]
+RewriteRule ^account/?$ account/index.php [QSA,L]
 
 # --- Generic fallback: keep any existing file working with a lang prefix ---
 RewriteRule ^(en|ar)/(.*)$ $2?lang=$1 [QSA,L]

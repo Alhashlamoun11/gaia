@@ -303,10 +303,10 @@ if (empty($nightStats)) {
     <p class="gaia-section-sub"><?= t('night.events_sub') ?></p>
     <div class="events-grid">
       <?php foreach ($nightEvents as $ev): ?>
-        <div class="event-card">
+        <a class="event-card" href="<?= gaia_url('events.php') ?>?slug=<?= urlencode($ev['slug'] ?? '') ?>">
           <img src="<?= htmlspecialchars($ev['image_url']) ?>" alt="<?= htmlspecialchars($ev['title']) ?>">
           <div class="ev-overlay"><span><?= htmlspecialchars($ev['badge']) ?></span><h3><?= htmlspecialchars($ev['title']) ?></h3><p><?= htmlspecialchars($ev['description']) ?></p></div>
-        </div>
+        </a>
       <?php endforeach; ?>
     </div>
   </div>

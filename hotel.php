@@ -37,6 +37,11 @@ if (!$hotel) {
     $is404 = false;
     $hotelId = (int)$hotel['id'];
 
+    // Localized hotel fields
+    $hotelName = lang_value($hotel, 'name', 'Hotel');
+    $hotelDesc = lang_value($hotel, 'description', '');
+    $hotelLoc  = lang_value($hotel, 'location', '');
+
     // Gallery
     $gallery = $hotel['gallery_urls'] !== null
         ? array_filter(array_map('trim', explode(',', $hotel['gallery_urls'])))
@@ -90,9 +95,9 @@ if (!$hotel) {
 
 // Dynamic SEO
 if (!$is404) {
-    $seoTitle = ($hotel['name'] ?? 'Hotel') . ' — GAIA TOURS & TRAVEL';
-    $seoDesc  = mb_strimwidth(strip_tags($hotel['description'] ?? ''), 0, 150, '…');
-    $seoImage = $gallery[0];
+    $seoTitle = $hotelName . ' — GAIA TOURS & TRAVEL';
+    $seoDesc  = mb_strimwidth(strip_tags($hotelDesc), 0, 150, '…');
+    $seoImage = $gallery[0] ?? '';
     // Average review rating
     $avgRating = (float)($hotel['avg_rating'] ?? 0);
 } else {
@@ -238,12 +243,12 @@ $currency = site_setting('currency_symbol', '$');
         <span class="sep">/</span>
         <a href="<?= gaia_url('index.php') ?>"><?= t('detail.hotels', 'Hotels') ?></a>
         <span class="sep">/</span>
-        <span><?= htmlspecialchars($hotel['name']) ?></span>
+        <span><?= htmlspecialchars($hotelName) ?></span>
       </nav>
-      <h1><?= htmlspecialchars($hotel['name']) ?></h1>
+      <h1><?= htmlspecialchars($hotelName) ?></h1>
       <div class="hero-stars"><?= str_repeat('★', (int)$hotel['star_rating']) ?></div>
-      <?php if (!empty($hotel['location'])): ?>
-        <span class="hero-loc"><i class="fa-solid fa-location-dot"></i> <?= htmlspecialchars($hotel['location']) ?></span>
+      <?php if (!empty($hotelLoc)): ?>
+        <span class="hero-loc"><i class="fa-solid fa-location-dot"></i> <?= htmlspecialchars($hotelLoc) ?></span>
       <?php endif; ?>
     </div>
   </section>
@@ -257,7 +262,7 @@ $currency = site_setting('currency_symbol', '$');
         <!-- Description -->
         <section class="section">
           <div class="section-head"><h2><?= t('hotel.description', 'About the Hotel') ?></h2><div class="eyebrow"></div></div>
-          <?php if ($hotel['description']): ?><p class="desc"><?= nl2br(htmlspecialchars($hotel['description'])) ?></p><?php endif; ?>
+          <?php if ($hotelDesc): ?><p class="desc"><?= nl2br(htmlspecialchars($hotelDesc)) ?></p><?php endif; ?>
         </section>
 
         <!-- Facilities -->
@@ -266,7 +271,7 @@ $currency = site_setting('currency_symbol', '$');
           <div class="section-head"><h2><?= t('hotel.facilities', 'Hotel Facilities') ?></h2><div class="eyebrow"></div></div>
           <div class="fac-grid">
             <?php foreach ($facilities as $f): ?>
-              <div class="fac-item"><i class="<?= htmlspecialchars($f['icon'] ?? 'fa-solid fa-check') ?>"></i> <?= htmlspecialchars($f['name']) ?></div>
+              <div class="fac-item"><i class="<?= htmlspecialchars($f['icon'] ?? 'fa-solid fa-check') ?>"></i> <?= htmlspecialchars(lang_value($f, 'name')) ?></div>
             <?php endforeach; ?>
           </div>
         </section>
@@ -278,7 +283,7 @@ $currency = site_setting('currency_symbol', '$');
           <div class="section-head"><h2><?= t('hotel.gallery', 'Gallery') ?></h2><div class="eyebrow"></div></div>
           <div class="gallery-grid">
             <?php foreach ($gallery as $i => $img): ?>
-              <img src="<?= htmlspecialchars($img) ?>" alt="<?= htmlspecialchars($hotel['name']) ?> — <?= $i + 1 ?>" loading="lazy">
+              <img src="<?= htmlspecialchars($img) ?>" alt="<?= htmlspecialchars($hotelName) ?> — <?= $i + 1 ?>" loading="lazy">
             <?php endforeach; ?>
           </div>
         </section>
@@ -291,12 +296,12 @@ $currency = site_setting('currency_symbol', '$');
           <div class="rooms-grid">
             <?php foreach ($rooms as $r): ?>
             <a class="room-card" href="<?= gaia_url('room.php') ?>?id=<?= (int)$r['id'] ?>">
-              <div class="media"><img src="<?= htmlspecialchars($r['image_url']) ?>" alt="<?= htmlspecialchars($r['name']) ?>" loading="lazy"></div>
+              <div class="media"><img src="<?= htmlspecialchars($r['image_url']) ?>" alt="<?= htmlspecialchars(lang_value($r, 'name')) ?>" loading="lazy"></div>
               <div class="body">
-                <h3><?= htmlspecialchars($r['name']) ?></h3>
+                <h3><?= htmlspecialchars(lang_value($r, 'name')) ?></h3>
                 <div class="meta">
                   <span><i class="fa-solid fa-user"></i> <?= (int)$r['capacity'] ?></span>
-                  <span><i class="fa-solid fa-bed"></i> <?= htmlspecialchars($r['beds']) ?></span>
+                  <span><i class="fa-solid fa-bed"></i> <?= htmlspecialchars(lang_value($r, 'beds')) ?></span>
                   <?php if (!empty($r['size_sqm'])): ?><span><i class="fa-solid fa-ruler-combined"></i> <?= (int)$r['size_sqm'] ?> m²</span><?php endif; ?>
                 </div>
                 <span class="price"><?= $currency ?><?= number_format((float)$r['price'], 0) ?> <small><?= t('hotel.per_night', '/ night') ?></small></span>
@@ -313,8 +318,8 @@ $currency = site_setting('currency_symbol', '$');
           <div class="section-head"><h2><?= t('hotel.offers', 'Hotel Offers') ?></h2><div class="eyebrow"></div></div>
           <?php foreach ($offers as $o): ?>
             <div class="offer-card">
-              <h4><?= htmlspecialchars($o['title']) ?></h4>
-              <?php if ($o['description']): ?><p><?= htmlspecialchars($o['description']) ?></p><?php endif; ?>
+              <h4><?= htmlspecialchars(lang_value($o, 'title')) ?></h4>
+              <?php $offerDesc = lang_value($o, 'description'); if ($offerDesc): ?><p><?= htmlspecialchars($offerDesc) ?></p><?php endif; ?>
               <span class="price"><?= $currency ?><?= number_format((float)$o['price'], 0) ?></span>
             </div>
           <?php endforeach; ?>
@@ -329,8 +334,8 @@ $currency = site_setting('currency_symbol', '$');
             <?php foreach ($reviews as $r): ?>
               <div class="review-card">
                 <div class="stars"><?= str_repeat('★', (int)$r['rating']) ?></div>
-                <h5><?= htmlspecialchars($r['reviewer']) ?> <span><?= htmlspecialchars($r['date_label'] ?? '') ?></span></h5>
-                <p><?= htmlspecialchars($r['text']) ?></p>
+                <h5><?= htmlspecialchars(lang_value($r, 'reviewer')) ?> <span><?= htmlspecialchars($r['date_label'] ?? '') ?></span></h5>
+                <p><?= htmlspecialchars(lang_value($r, 'text')) ?></p>
               </div>
             <?php endforeach; ?>
           </div>
@@ -367,9 +372,9 @@ $currency = site_setting('currency_symbol', '$');
       <div class="tour-row">
         <?php foreach ($relatedTours as $t): ?>
         <a class="tour-card" href="<?= gaia_url('tour.php') ?>?slug=<?= urlencode($t['slug']) ?>">
-          <div class="media"><img src="<?= htmlspecialchars($t['image_url']) ?>" alt="<?= htmlspecialchars($t['name']) ?>" loading="lazy"></div>
+          <div class="media"><img src="<?= htmlspecialchars($t['image_url']) ?>" alt="<?= htmlspecialchars(lang_value($t, 'name')) ?>" loading="lazy"></div>
           <div class="body">
-            <h3><?= htmlspecialchars($t['name']) ?></h3>
+            <h3><?= htmlspecialchars(lang_value($t, 'name')) ?></h3>
             <span class="price"><?= t('tour.from', 'From') ?> $<?= number_format((float)$t['base_price'], 0) ?></span>
           </div>
         </a>
@@ -384,9 +389,9 @@ $currency = site_setting('currency_symbol', '$');
       <div class="tour-row">
         <?php foreach ($nearby as $n): ?>
         <a class="tour-card" href="<?= gaia_url('hotel.php') ?>?slug=<?= urlencode($n['slug']) ?>">
-          <div class="media"><img src="<?= htmlspecialchars($n['image_url']) ?>" alt="<?= htmlspecialchars($n['name']) ?>" loading="lazy"></div>
+          <div class="media"><img src="<?= htmlspecialchars($n['image_url']) ?>" alt="<?= htmlspecialchars(lang_value($n, 'name')) ?>" loading="lazy"></div>
           <div class="body">
-            <h3><?= htmlspecialchars($n['name']) ?></h3>
+            <h3><?= htmlspecialchars(lang_value($n, 'name')) ?></h3>
             <span class="price"><?= t('hotel.from', 'From') ?> $<?= number_format((float)$n['price_from'], 0) ?></span>
           </div>
         </a>

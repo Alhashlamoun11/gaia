@@ -31,8 +31,16 @@ try {
 if (!$event) {
     http_response_code(404);
     $is404 = true;
+    $gallery = [];
 } else {
     $is404 = false;
+
+    // Localized fields
+    $eventTitle = lang_value($event, 'title', 'Event');
+    $eventDesc  = lang_value($event, 'description', '');
+    $eventDate  = lang_value($event, 'date_label', '');
+    $eventLoc   = lang_value($event, 'location', '');
+    $eventOrg   = lang_value($event, 'organizer', '');
 
     // Gallery
     $gallery = $event['gallery_urls'] !== null
@@ -72,9 +80,9 @@ if (!$event) {
 
 // Dynamic SEO
 if (!$is404) {
-    $seoTitle = ($event['title'] ?? 'Event') . ' — GAIA TOURS & TRAVEL';
-    $seoDesc  = mb_strimwidth(strip_tags($event['description'] ?? ''), 0, 150, '…');
-    $seoImage = $gallery[0];
+    $seoTitle = $eventTitle . ' — GAIA TOURS & TRAVEL';
+    $seoDesc  = mb_strimwidth(strip_tags($eventDesc), 0, 150, '…');
+    $seoImage = $gallery[0] ?? '';
 } else {
     $seoTitle = t('detail.not_found', 'Not Found') . ' — GAIA TOURS & TRAVEL';
     $seoDesc  = t('detail.not_found_text', 'The page you are looking for does not exist.');
@@ -208,18 +216,18 @@ if (!$is404) {
         <span class="sep">/</span>
         <a href="<?= gaia_url('gaia-night.php') ?>"><?= t('detail.events', 'Events') ?></a>
         <span class="sep">/</span>
-        <span><?= htmlspecialchars($event['title']) ?></span>
+        <span><?= htmlspecialchars($eventTitle) ?></span>
       </nav>
-      <h1><?= htmlspecialchars($event['title']) ?></h1>
+      <h1><?= htmlspecialchars($eventTitle) ?></h1>
       <div class="detail-hero-meta">
-        <?php if (!empty($event['date_label'])): ?>
-          <span class="meta-item"><i class="fa-regular fa-calendar"></i> <?= htmlspecialchars($event['date_label']) ?></span>
+        <?php if (!empty($eventDate)): ?>
+          <span class="meta-item"><i class="fa-regular fa-calendar"></i> <?= htmlspecialchars($eventDate) ?></span>
         <?php endif; ?>
-        <?php if (!empty($event['location'])): ?>
-          <span class="meta-item"><i class="fa-solid fa-location-dot"></i> <?= htmlspecialchars($event['location']) ?></span>
+        <?php if (!empty($eventLoc)): ?>
+          <span class="meta-item"><i class="fa-solid fa-location-dot"></i> <?= htmlspecialchars($eventLoc) ?></span>
         <?php endif; ?>
-        <?php if (!empty($event['organizer'])): ?>
-          <span class="meta-item"><i class="fa-solid fa-user-group"></i> <?= t('event.organizer', 'Organized by') ?>: <?= htmlspecialchars($event['organizer']) ?></span>
+        <?php if (!empty($eventOrg)): ?>
+          <span class="meta-item"><i class="fa-solid fa-user-group"></i> <?= t('event.organizer', 'Organized by') ?>: <?= htmlspecialchars($eventOrg) ?></span>
         <?php endif; ?>
       </div>
     </div>
@@ -232,8 +240,8 @@ if (!$is404) {
         <h2><?= t('event.description', 'About this Event') ?></h2>
         <div class="eyebrow"></div>
       </div>
-      <?php if ($event['description']): ?>
-        <div class="event-description"><?= nl2br(htmlspecialchars($event['description'])) ?></div>
+      <?php if ($eventDesc): ?>
+        <div class="event-description"><?= nl2br(htmlspecialchars($eventDesc)) ?></div>
       <?php endif; ?>
     </div>
   </section>
@@ -248,7 +256,7 @@ if (!$is404) {
       </div>
       <div class="gallery-grid">
         <?php foreach ($gallery as $i => $img): ?>
-          <img src="<?= htmlspecialchars($img) ?>" alt="<?= htmlspecialchars($event['title']) ?> — <?= $i + 1 ?>">
+          <img src="<?= htmlspecialchars($img) ?>" alt="<?= htmlspecialchars($eventTitle) ?> — <?= $i + 1 ?>">
         <?php endforeach; ?>
       </div>
     </div>
@@ -264,12 +272,13 @@ if (!$is404) {
         <div class="eyebrow"></div>
       </div>
       <div class="dest-card">
+        <?php $destName = lang_value($destination, 'name'); $destDesc = lang_value($destination, 'description'); ?>
         <?php if ($destination['image_url']): ?>
-          <img src="<?= htmlspecialchars($destination['image_url']) ?>" alt="<?= htmlspecialchars($destination['name']) ?>">
+          <img src="<?= htmlspecialchars($destination['image_url']) ?>" alt="<?= htmlspecialchars($destName) ?>">
         <?php endif; ?>
         <div class="dest-body">
-          <h3><?= htmlspecialchars($destination['name']) ?><?= !empty($destination['country']) ? ', ' . htmlspecialchars($destination['country']) : '' ?></h3>
-          <?php if ($destination['description']): ?><p><?= htmlspecialchars($destination['description']) ?></p><?php endif; ?>
+          <h3><?= htmlspecialchars($destName) ?><?= !empty($destination['country']) ? ', ' . htmlspecialchars($destination['country']) : '' ?></h3>
+          <?php if ($destDesc): ?><p><?= htmlspecialchars($destDesc) ?></p><?php endif; ?>
         </div>
       </div>
     </div>
@@ -287,9 +296,9 @@ if (!$is404) {
       <div class="tour-row">
         <?php foreach ($relatedTours as $t): ?>
         <a class="tour-card" href="<?= gaia_url('tour.php') ?>?slug=<?= urlencode($t['slug']) ?>">
-          <div class="media"><img src="<?= htmlspecialchars($t['image_url']) ?>" alt="<?= htmlspecialchars($t['name']) ?>" loading="lazy"></div>
+          <div class="media"><img src="<?= htmlspecialchars($t['image_url']) ?>" alt="<?= htmlspecialchars(lang_value($t, 'name')) ?>" loading="lazy"></div>
           <div class="body">
-            <h3><?= htmlspecialchars($t['name']) ?></h3>
+            <h3><?= htmlspecialchars(lang_value($t, 'name')) ?></h3>
             <div class="meta">
 <span><i class="fa-regular fa-clock"></i> <?= t_fmt('tour.duration', ['days' => (int)$t['duration_days']]) ?></span>
               <span class="price"><?= t('tour.from', 'From') ?> $<?= number_format((float)$t['base_price'], 0) ?></span>
@@ -307,7 +316,7 @@ if (!$is404) {
     <div class="container">
       <div class="cta-band">
         <div>
-          <h3><?= htmlspecialchars($event['title']) ?></h3>
+          <h3><?= htmlspecialchars($eventTitle) ?></h3>
           <p><?= t('event.book_cta_sub', 'Limited seats — reserve your spot today.') ?></p>
         </div>
         <a class="gaia-btn gaia-btn-gold" href="<?= gaia_url('contact') ?>"><?= t('event.book_cta', 'Reserve Your Spot') ?></a>
@@ -321,4 +330,3 @@ if (!$is404) {
 <script src="assets/gaia.js"></script>
 </body>
 </html>
-
