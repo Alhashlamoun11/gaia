@@ -1,0 +1,52 @@
+Options -MultiViews
+RewriteEngine On
+
+# ------------------------------------------------------------------
+# GAIA TOURS & TRAVEL — Multilingual URL Routing
+# ------------------------------------------------------------------
+# URL language prefixes: /en/ (English, LTR) and /ar/ (Arabic, RTL)
+#
+#   /en/                    -> index.php?lang=en
+#   /ar/                    -> index.php?lang=ar
+#   /en/tours               -> weroad/search.php?lang=en
+#   /ar/tours               -> weroad/search.php?lang=ar
+#   /en/tours/jordan-360    -> weroad/trip.php?lang=en&slug=jordan-360
+#   /en/gaia-night          -> gaia-night.php?lang=en
+#
+# Non-prefixed URLs keep working (defaults to English).
+
+# --- Homepage ---
+RewriteRule ^(en|ar)/?$ index.php?lang=$1 [QSA,L]
+
+# --- Tours ---
+RewriteRule ^(en|ar)/tours/?$ weroad/search.php?lang=$1 [QSA,L]
+RewriteRule ^(en|ar)/tours/([^/]+)/?$ tour.php?lang=$1&slug=$2 [QSA,L]
+
+# --- Dynamic detail pages: Events / Hotels / Rooms ---
+RewriteRule ^(en|ar)/events/([^/]+)/?$ events.php?lang=$1&slug=$2 [QSA,L]
+RewriteRule ^(en|ar)/hotels/([^/]+)/?$ hotel.php?lang=$1&slug=$2 [QSA,L]
+RewriteRule ^(en|ar)/rooms/([0-9]+)/?$ room.php?lang=$1&id=$2 [QSA,L]
+
+# --- Destinations ---
+RewriteRule ^(en|ar)/destinations/?$ weroad/search.php?lang=$1&destinations=1 [QSA,L]
+
+# --- Hotels (existing platform home page) ---
+RewriteRule ^(en|ar)/hotels/?$ index.php?lang=$1 [QSA,L]
+
+# --- Transfers / transfer booking ---
+RewriteRule ^(en|ar)/transfers/?$ route.php?lang=$1 [QSA,L]
+RewriteRule ^(en|ar)/route/?$ route.php?lang=$1 [QSA,L]
+RewriteRule ^(en|ar)/checkout/?$ checkout.php?lang=$1 [QSA,L]
+RewriteRule ^(en|ar)/transfer-booking/?$ route.php?lang=$1 [QSA,L]
+
+# --- GAIA Night / Events / Reviews ---
+RewriteRule ^(en|ar)/gaia-night/?$ gaia-night.php?lang=$1 [QSA,L]
+RewriteRule ^(en|ar)/events/?$ gaia-night.php?lang=$1 [QSA,L]
+RewriteRule ^(en|ar)/reviews/?$ index.php?lang=$1 [QSA,L]
+
+# --- About / Contact (CMS pages from `pages` table) ---
+RewriteRule ^(en|ar)/about/?$ page.php?lang=$1&slug=about [QSA,L]
+RewriteRule ^(en|ar)/contact/?$ page.php?lang=$1&slug=contact [QSA,L]
+
+# --- Generic fallback: keep any existing file working with a lang prefix ---
+RewriteRule ^(en|ar)/(.*)$ $2?lang=$1 [QSA,L]
