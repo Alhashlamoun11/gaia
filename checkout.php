@@ -13,18 +13,23 @@ require_once __DIR__ . '/components/bootstrap.php';
 require_once __DIR__ . '/components/gaia-config.php';
 require_once __DIR__ . '/auth/helpers.php';
 require_once __DIR__ . '/auth/Auth.php';
+require_once __DIR__ . '/auth/middleware.php';
 
 // Shared header/footer variables
 $gaia_base          = '';
 $gaia_active        = 'transfers';
 $gaia_header_style  = 'solid';
 
-// Pre-fill contact fields from the authenticated account (if logged in).
-// Guests keep the fields editable.
-$authUser = auth_check() ? auth_user() : null;
-$prefillName  = $authUser ? trim($authUser['first_name'] . ' ' . $authUser['last_name']) : '';
-$prefillEmail = $authUser ? $authUser['email'] : '';
-$prefillPhone = $authUser ? ($authUser['phone'] ?? '') : '';
+// ------------------------------------------------------------
+// SECURITY: Only authenticated customers may reach the booking
+// form. Guests are redirected to login and returned afterwards.
+// ------------------------------------------------------------
+require_booking_login('checkout.php');
+
+$authUser = auth_user();
+$prefillName  = trim($authUser['first_name'] . ' ' . $authUser['last_name']);
+$prefillEmail = $authUser['email'];
+$prefillPhone = $authUser['phone'] ?? '';
 
 $routeId    = (int)($_GET['route_id'] ?? 0);
 $carClassId = (int)($_GET['car_class_id'] ?? 0);

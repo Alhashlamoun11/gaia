@@ -25,11 +25,18 @@ $gaia_header_style = 'solid';
 
 Auth::startSession();
 
+// Capture a safe return-to target (booking flow) before any redirect.
+$redirect = safe_redirect_target($_GET['redirect'] ?? '');
+
 // Already logged in? Send to the right place.
 if (Auth::check()) {
     $role = Auth::role();
     if ($role === 'super_admin' || $role === 'hotel_manager') {
         header('Location: index.php');
+        exit;
+    }
+    if ($redirect !== '') {
+        header('Location: ' . $redirect);
         exit;
     }
     header('Location: account/index.php');
@@ -60,6 +67,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $role = Auth::role();
             if ($role === 'super_admin' || $role === 'hotel_manager') {
                 header('Location: index.php');
+                exit;
+            }
+            if ($redirect !== '') {
+                header('Location: ' . $redirect);
                 exit;
             }
             header('Location: account/index.php');

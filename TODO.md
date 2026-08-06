@@ -1,26 +1,44 @@
-# GAIA — Unified Booking & Payment Architecture — Implementation Todo
+# Customer Dashboard — Implementation TODO
 
-Task: Prepare a scalable unified booking + payment workflow for Tours, Hotel
-Rooms, Events and Transfers, ready for future CyberSource — WITHOUT DB redesign,
-NO CyberSource integration, NO real payment processing.
+## Booking Ownership Enforcement
+- [x] `process_booking.php` — add auth gate + require authenticated user_id
+- [x] `weroad/process_booking.php` — add auth gate + require authenticated user_id
+- [x] `checkout.php` — add login gate (redirect to login, return after)
+- [x] `weroad/booking.php` — add login gate (redirect to login, return after)
+- [x] `login.php` — honor validated internal `?redirect=` after successful login
 
-## Status of existing work (already in repo & passing `_verify_architecture.php`)
-- [x] Tables created: `payments`, `payment_transactions`, `invoices`, `booking_logs`, `room_bookings`
-- [x] Tables modified: `booking_reference` + expanded status ENUM + user_id on all booking tables
-- [x] Services: BookingReferenceService, BookingTimelineService, BookingSummaryService, PaymentService, InvoiceService, GatewayManager, BookingService, ReportingService
-- [x] Helpers: booking_status_list, payment_status_list, invoice_status_list, normalize_*, *_label, booking_reference_prefix, *_badge_class, timeline_action_label
-- [x] Customer details page uses reusable `components/booking-summary.php`
-- [x] My Payments / My Invoices pages + nav
+## Routes
+- [x] `router.php` — add /account/dashboard, /account/security, /account/bookings/{ref}
+- [x] `.htaccess` — mirror the new account routes
 
-## Integration work
-- [x] 1. `process_booking.php` (transfer) wired to: generate GAIA reference, store `booking_reference`, log "Booking Created" timeline, create payment
-- [x] 2. `weroad/process_booking.php` (tour) wired to: generate GAIA reference, store `booking_reference`, log "Booking Created" timeline, create payment
-- [x] 3. `BookingSummaryService::findByReference()` + `tableForType()` added (IDOR-scoped)
-- [x] 4. `_verify_flow.php` smoke test created — exercises booking → payment → invoice → timeline flow end-to-end
-- [x] 5. `php -l` passed on all changed/key files; migration-11 applied; flow verify script green
-- [x] 6. Final implementation report produced (deliverables)
+## Dashboard Homepage
+- [x] `account/index.php` — quick stats, recent activity, upcoming reservations, quick actions
 
-## Verification
-- `_verify_architecture.php` — schema/service architecture checks (passing)
-- `_verify_flow.php` — end-to-end flow smoke test (ALL FLOW CHECKS PASSED)
-- `php -l` — no syntax errors in any service or booking-processing file
+## My Bookings
+- [x] `account/bookings.php` — unified table, filters, pagination
+
+## Booking Details
+- [x] `account/booking.php` — load by booking_reference via BookingSummaryService
+
+## My Payments
+- [x] `account/payments.php` — status filters + pagination
+
+## My Invoices
+- [ ] `account/invoices.php` — view/print actions + printable layout
+- [ ] `account/invoice-print.php` — printable invoice (browser print view)
+
+## Profile
+- [ ] `account/profile.php` — avatar file upload + validation
+
+## Security Page
+- [x] `account/security.php` — change password + security info (NEW)
+
+## Navigation
+- [x] `account/_layout.php` — sidebar (Dashboard/Bookings/Payments/Invoices/Profile/Security/Logout) + active highlighting
+
+## Localization
+- [ ] `schema-migration-12.sql` — add all missing EN/AR translation keys
+
+## Security Audit
+- [ ] Verify ownership, CSRF, XSS escaping, PDO prepared statements
+- [ ] Produce security verification report + implementation report

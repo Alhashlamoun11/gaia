@@ -14,13 +14,20 @@ require_once __DIR__ . '/config.php';
 require_once __DIR__ . '/../components/gaia-config.php';
 require_once __DIR__ . '/../auth/helpers.php';
 require_once __DIR__ . '/../auth/Auth.php';
+require_once __DIR__ . '/../auth/middleware.php';
 
-// Pre-fill contact fields from the authenticated account (if logged in).
-// Guests keep the fields editable.
-$authUser = auth_check() ? auth_user() : null;
-$prefillName  = $authUser ? trim($authUser['first_name'] . ' ' . $authUser['last_name']) : '';
-$prefillEmail = $authUser ? $authUser['email'] : '';
-$prefillPhone = $authUser ? ($authUser['phone'] ?? '') : '';
+// ------------------------------------------------------------
+// SECURITY: Only authenticated customers may reach the tour
+// booking form. Guests are redirected to login and returned
+// afterwards (return-to-page support).
+// ------------------------------------------------------------
+require_booking_login('../weroad/booking.php');
+
+// Pre-fill contact fields from the authenticated account.
+$authUser = auth_user();
+$prefillName  = trim($authUser['first_name'] . ' ' . $authUser['last_name']);
+$prefillEmail = $authUser['email'];
+$prefillPhone = $authUser['phone'] ?? '';
 
 $tripId      = (int)($_GET['trip_id'] ?? 0);
 $departureId = (int)($_GET['departure_id'] ?? 0);
@@ -251,7 +258,7 @@ require __DIR__ . '/../components/gaia-header.php';
         <span><?= t_fmt('tours.booking_social_proof', ['count' => 400]) ?></span>
       </div>
       <div class="summary-help">
-        <strong><?= t('tours.booking_need_help') ?></strong>
+        <stroye.booking_need_help') ?></strong>
         <a href="<?= gaia_url('contact') ?>"><?= t('tours.booking_ask') ?></a>
       </div>
     </aside>

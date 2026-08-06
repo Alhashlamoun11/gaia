@@ -18,6 +18,7 @@ require_once __DIR__ . '/config.php';
 require_once __DIR__ . '/../components/gaia-config.php';
 require_once __DIR__ . '/../auth/helpers.php';
 require_once __DIR__ . '/../auth/Auth.php';
+require_once __DIR__ . '/../auth/middleware.php';
 require_once __DIR__ . '/../services/BookingReferenceService.php';
 require_once __DIR__ . '/../services/BookingTimelineService.php';
 require_once __DIR__ . '/../services/PaymentService.php';
@@ -25,13 +26,24 @@ require_once __DIR__ . '/../services/BookingService.php';
 
 header('Content-Type: application/json; charset=utf-8');
 
-// Authenticated user id (0 = guest). Guest bookings keep user_id NULL.
-$authUserId = auth_check() ? (int)auth_id() : 0;
-
 // Only allow POST
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405);
     echo json_encode(['success' => false, 'message' => 'Method not allowed. Use POST.']);
+    exit;
+}
+
+// ------------------------------------------------------------
+// SECURITY: Anonymous bookings are no longer allowed.
+// The user MUST be authenticated before a booking can be created.
+// If not, redirect to the login page and return afterwards.
+// ------------------------------------------------------------
+require_booking_login('../weroad/booking.php');
+
+$authUserId = (int)auth_id();
+if ($authUserId <= 0) {
+    http_response_code(403);
+    echo json_encode(['success' => false, 'message' => 'You must be signed in to book.']);
     exit;
 }
 

@@ -38,11 +38,14 @@ $base = '../';
       <a href="<?= $base ?>account/invoices.php" class="<?= $activeTab === 'invoices' ? 'active' : '' ?>">
         <i class="fa-solid fa-file-invoice-dollar"></i> <?= htmlspecialchars(t('account.my_invoices')) ?>
       </a>
-      <a href="<?= $base ?>account/claim-booking.php" class="<?= $activeTab === 'claim' ? 'active' : '' ?>">
+<a href="<?= $base ?>account/claim-booking.php" class="<?= $activeTab === 'claim' ? 'active' : '' ?>">
         <i class="fa-solid fa-link"></i> <?= htmlspecialchars(t('account.claim_booking')) ?>
       </a>
       <a href="<?= $base ?>account/profile.php" class="<?= $activeTab === 'profile' ? 'active' : '' ?>">
         <i class="fa-solid fa-user"></i> <?= htmlspecialchars(t('account.profile')) ?>
+      </a>
+      <a href="<?= $base ?>account/security.php" class="<?= $activeTab === 'security' ? 'active' : '' ?>">
+        <i class="fa-solid fa-shield-halved"></i> <?= htmlspecialchars(t('account.security')) ?>
       </a>
     </nav>
     <form method="post" action="<?= $base ?>logout.php" class="account-logout-form">

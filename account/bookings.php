@@ -2,24 +2,30 @@
 /**
  * account/bookings.php
  * ------------------------------------------------------------
- * My Bookings — grouped booking history for the logged-in customer.
+ * My Bookings — unified booking history for the logged-in
+ * customer across ALL booking types (tours, hotels, rooms,
+ * events, transfers).
  *
- * Shows all bookings belonging to the authenticated user, grouped by:
- *   Tours / Hotels / Events / Transfers
+ * Shows a single table with columns:
+ *   Booking Reference, Service Type, Service Name, Booking Date,
+ *   Amount, Status, View Details
  *
- * Each row displays:
- *   Booking Reference, Booking Date, Service Name, Status, Amount, Actions
+ * Features:
+ *   - Type filters (All / Tours / Hotels / Rooms / Events / Transfers)
+ *   - Status filters (Pending / Awaiting Payment / Paid / Confirmed /
+ *     Completed / Cancelled / Refunded)
+ *   - Pagination
  *
- * Uses BookingRepository::getUser*Bookings() so the same ownership-aware
- * helpers are reused by admin dashboards, hotel managers and future
- * payment reporting.
+ * SECURITY: data is loaded via BookingSummaryService::getUserSummaries()
+ * which scopes every query to the authenticated user_id (IDOR-safe).
+ * All output is XSS-escaped; PDO prepared statements used.
  * ------------------------------------------------------------
  */
 require_once __DIR__ . '/../components/bootstrap.php';
 require_once __DIR__ . '/../components/gaia-config.php';
 require_once __DIR__ . '/../auth/middleware.php';
 require_once __DIR__ . '/../auth/helpers.php';
-require_once __DIR__ . '/../auth/BookingRepository.php';
+require_once __DIR__ . '/../services/BookingSummaryService.php';
 
 $gaia_base         = '';
 $gaia_active       = 'home';
@@ -29,19 +35,68 @@ require_login();
 
 $userId = (int)auth_id();
 
-// Ownership-scoped bookings (never surfaces another user's records).
-$tours     = BookingRepository::getUserTourBookings($userId);
-$hotels    = BookingRepository::getUserHotelBookings($userId);
-$events    = BookingRepository::getUserEventBookings($userId);
-$transfers = BookingRepository::getUserTransferBookings($userId);
-$total     = count($tours) + count($hotels) + count($events) + count($transfers);
+// ------------------------------------------------------------
+// Filters
+// ------------------------------------------------------------
+$typeFilter   = trim($_GET['type'] ?? '');
+$statusFilter = trim($_GET['status'] ?? '');
 
-$sections = [
-    'tours'     => ['label' => t('account.section_tours'),     'rows' => $tours],
-    'hotels'    => ['label' => t('account.section_hotels'),    'rows' => $hotels],
-    'events'    => ['label' => t('account.section_events'),    'rows' => $events],
-    'transfers' => ['label' => t('account.section_transfers'), 'rows' => $transfers],
-];
+$allowedTypes   = ['tour', 'hotel', 'room', 'event', 'transfer', 'taxi'];
+$allowedStatuses = booking_status_list(); // pending, awaiting_payment, paid, confirmed, completed, cancelled, refunded
+
+if ($typeFilter !== '' && !in_array($typeFilter, $allowedTypes, true)) {
+    $typeFilter = '';
+}
+if ($statusFilter !== '' && !in_array($statusFilter, $allowedStatuses, true)) {
+    $statusFilter = '';
+}
+
+// ------------------------------------------------------------
+// Load all bookings (ownership-scoped)
+// ------------------------------------------------------------
+$allBookings = BookingSummaryService::getUserSummaries($userId);
+
+// Apply type filter
+if ($typeFilter !== '') {
+    $allBookings = array_values(array_filter($allBookings, function ($b) use ($typeFilter) {
+        return (string)($b['booking_type'] ?? '') === $typeFilter;
+    }));
+}
+
+// Apply status filter (normalise)
+if ($statusFilter !== '') {
+    $allBookings = array_values(array_filter($allBookings, function ($b) use ($statusFilter) {
+        return normalize_booking_status($b['status'] ?? '') === $statusFilter;
+    }));
+}
+
+// ------------------------------------------------------------
+// Pagination
+// ------------------------------------------------------------
+$perPage = 10;
+$total   = count($allBookings);
+$pages   = max(1, (int)ceil($total / $perPage));
+$page    = max(1, (int)($_GET['page'] ?? 1));
+if ($page > $pages) {
+    $page = $pages;
+}
+$offset  = ($page - 1) * $perPage;
+$bookings = array_slice($allBookings, $offset, $perPage);
+
+// Helper to build a filtered/paginated URL preserving query params
+function bookings_url(array $overrides = []): string
+{
+    $q = $_GET;
+    foreach ($overrides as $k => $v) {
+        if ($v === '' || $v === null) {
+            unset($q[$k]);
+        } else {
+            $q[$k] = $v;
+        }
+    }
+    unset($q['lang']);
+    return 'bookings.php?' . http_build_query($q);
+}
 ?>
 <!DOCTYPE html>
 <html lang="<?= htmlspecialchars(gaia_current_lang()) ?>" dir="<?= gaia_dir() ?>">
@@ -77,23 +132,30 @@ a{text-decoration:none;color:inherit;}
 .card{background:#fff;border:1px solid var(--line);border-radius:16px;padding:24px;box-shadow:var(--shadow);margin-bottom:22px;}
 .card h2{font-size:20px;margin-bottom:4px;}
 .card .sub{color:var(--muted);font-size:14px;margin:0 0 18px;}
-.section-head{display:flex;align-items:center;gap:10px;margin:22px 0 12px;padding-bottom:10px;border-bottom:1px solid var(--line);}
-.section-head:first-of-type{margin-top:0;}
-.section-head h3{font-size:17px;}
-.section-head .count{background:var(--navy);color:#fff;border-radius:20px;padding:2px 10px;font-size:12px;font-weight:700;}
+.filters{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:18px;}
+.filters select,.filters a.filter-btn{padding:10px 14px;border:1px solid var(--line);border-radius:10px;font-size:13.5px;font-family:inherit;background:#fbfaf7;color:var(--ink);}
+.filters a.filter-btn{display:inline-flex;align-items:center;gap:6px;text-decoration:none;cursor:pointer;}
+.filters a.filter-btn:hover{background:#f4efe6;}
 .table-wrap{overflow-x:auto;}
-table{width:100%;border-collapse:collapse;min-width:640px;}
+table{width:100%;border-collapse:collapse;min-width:720px;}
 th,td{text-align:left;padding:12px 14px;border-bottom:1px solid #f0ede6;font-size:13.5px;}
-tbody tr:last-child td{border-bottom:none;}
 th{font-size:12px;text-transform:uppercase;letter-spacing:.4px;color:var(--muted);}
 td .code{font-weight:700;}
 .badge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:11.5px;font-weight:700;text-transform:uppercase;}
-.badge-confirmed{background:#e8f5ee;color:#1b6e43;}
-.badge-pending{background:#fff3d6;color:#8a6d00;}
-.badge-cancelled{background:#fdecea;color:#b3261e;}
+.badge-confirmed,.badge-paid,.badge-completed{background:#e8f5ee;color:#1b6e43;}
+.badge-pending,.badge-awaiting_payment{background:#fff3d6;color:#8a6d00;}
+.badge-cancelled,.badge-failed{background:#fdecea;color:#b3261e;}
+.badge-refunded{background:#f0ece6;color:#6b6060;}
 .btn-link{color:var(--teal);font-weight:600;font-size:13px;}
 .btn-link:hover{text-decoration:underline;}
-.empty{color:var(--muted);font-size:14px;}
+.empty{color:var(--muted);font-size:14px;padding:20px 0;}
+/* Pagination */
+.pagination{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-top:18px;flex-wrap:wrap;font-size:13.5px;}
+.pagination .info{color:var(--muted);}
+.pagination .pages{display:flex;gap:6px;flex-wrap:wrap;}
+.pagination .pages a,.pagination .pages span{min-width:34px;height:34px;display:inline-flex;align-items:center;justify-content:center;border:1px solid var(--line);border-radius:8px;font-size:13px;color:var(--ink);background:#fff;text-decoration:none;}
+.pagination .pages a:hover{background:#f4efe6;}
+.pagination .pages span.current{background:var(--navy);color:#fff;border-color:var(--navy);font-weight:600;}
 @media (max-width:860px){.account-layout{grid-template-columns:1fr;}.account-nav{flex-direction:row;flex-wrap:wrap;}.account-logout-form{border-top:none;padding-top:0;}}
 </style>
 </head>
@@ -108,46 +170,90 @@ td .code{font-weight:700;}
     <h2><?= htmlspecialchars(t('account.my_bookings')) ?></h2>
     <p class="sub"><?= htmlspecialchars(t_fmt('account.total_bookings', ['count' => $total])) ?></p>
 
-    <?php if ($total === 0): ?>
-      <p class="empty"><?= htmlspecialchars(t('account.no_bookings')) ?></p>
+    <!-- FILTERS -->
+    <form method="get" action="bookings.php" class="filters">
+      <select name="type" onchange="this.form.submit()">
+        <option value=""><?= htmlspecialchars(t('account.all_types')) ?></option>
+        <option value="tour"     <?= $typeFilter === 'tour'     ? 'selected' : '' ?>><?= htmlspecialchars(t('account.type_tour')) ?></option>
+        <option value="hotel"    <?= $typeFilter === 'hotel'    ? 'selected' : '' ?>><?= htmlspecialchars(t('account.type_hotel')) ?></option>
+        <option value="room"     <?= $typeFilter === 'room'     ? 'selected' : '' ?>><?= htmlspecialchars(t('account.type_room')) ?></option>
+        <option value="event"    <?= $typeFilter === 'event'    ? 'selected' : '' ?>><?= htmlspecialchars(t('account.type_event')) ?></option>
+        <option value="transfer" <?= $typeFilter === 'transfer' ? 'selected' : '' ?>><?= htmlspecialchars(t('account.type_transfer')) ?></option>
+        <option value="taxi"     <?= $typeFilter === 'taxi'     ? 'selected' : '' ?>><?= htmlspecialchars(t('account.type_taxi')) ?></option>
+      </select>
+      <select name="status" onchange="this.form.submit()">
+        <option value=""><?= htmlspecialchars(t('account.all_statuses')) ?></option>
+        <?php foreach ($allowedStatuses as $st): ?>
+          <option value="<?= htmlspecialchars($st) ?>" <?= $statusFilter === $st ? 'selected' : '' ?>><?= htmlspecialchars(booking_status_label($st)) ?></option>
+        <?php endforeach; ?>
+      </select>
+      <a class="filter-btn" href="<?= htmlspecialchars(bookings_url(['type' => '', 'status' => '', 'page' => ''])) ?>"><i class="fa-solid fa-rotate-left"></i> <?= htmlspecialchars(t('account.reset_filters')) ?></a>
+    </form>
+
+    <?php if (!$bookings): ?>
+      <p class="empty"><?= htmlspecialchars(t('account.no_records')) ?></p>
     <?php else: ?>
-      <?php foreach ($sections as $key => $section): ?>
-        <?php if (empty($section['rows'])) continue; ?>
-        <div class="section-head">
-          <h3><?= htmlspecialchars($section['label']) ?></h3>
-          <span class="count"><?= count($section['rows']) ?></span>
-        </div>
-        <div class="table-wrap">
-          <table>
-            <thead>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th><?= htmlspecialchars(t('account.booking_reference')) ?></th>
+              <th><?= htmlspecialchars(t('account.booking_type')) ?></th>
+              <th><?= htmlspecialchars(t('account.service_name')) ?></th>
+              <th><?= htmlspecialchars(t('account.booking_date')) ?></th>
+              <th><?= htmlspecialchars(t('account.amount')) ?></th>
+              <th><?= htmlspecialchars(t('account.status')) ?></th>
+              <th><?= htmlspecialchars(t('account.actions')) ?></th>
+            </tr>
+          </thead>
+          <tbody>
+            <?php foreach ($bookings as $b): ?>
+              <?php
+                $ref = $b['booking_reference'] ?: $b['booking_code'];
+                $type = (string)($b['booking_type'] ?? '');
+                $status = normalize_booking_status($b['status'] ?? '');
+              ?>
               <tr>
-                <th><?= htmlspecialchars(t('account.booking_code')) ?></th>
-                <th><?= htmlspecialchars(t('account.booking_date')) ?></th>
-                <th><?= htmlspecialchars(t('account.service_name')) ?></th>
-                <th><?= htmlspecialchars(t('account.status')) ?></th>
-                <th><?= htmlspecialchars(t('account.amount')) ?></th>
-                <th><?= htmlspecialchars(t('account.actions')) ?></th>
+                <td class="code"><?= htmlspecialchars($ref) ?></td>
+                <td><?= htmlspecialchars(booking_type_label($type)) ?></td>
+                <td><?= htmlspecialchars($b['service_name'] ?? '') ?></td>
+                <td><?= htmlspecialchars($b['created_date'] ?? '') ?></td>
+                <td><?= htmlspecialchars(number_format((float)($b['amount'] ?? 0), 2)) ?> <?= htmlspecialchars($b['currency'] ?? 'USD') ?></td>
+                <td><span class="badge badge-<?= htmlspecialchars($status) ?>"><?= htmlspecialchars(booking_status_label($status)) ?></span></td>
+                <td>
+                  <a class="btn-link" href="<?= gaia_url('account/booking.php') ?>?reference=<?= urlencode($ref) ?>">
+                    <?= htmlspecialchars(t('account.view_details')) ?>
+                  </a>
+                </td>
               </tr>
-            </thead>
-            <tbody>
-              <?php foreach ($section['rows'] as $b): ?>
-                <tr>
-                  <td class="code"><?= htmlspecialchars($b['booking_code']) ?></td>
-                  <td><?= htmlspecialchars($b['date']) ?></td>
-                  <td><?= htmlspecialchars($b['title']) ?></td>
-                  <td><span class="badge badge-<?= htmlspecialchars($b['status']) ?>"><?= htmlspecialchars(booking_status_label($b['status'])) ?></span></td>
-                  <td><?= htmlspecialchars(number_format((float)$b['total_price'], 2)) ?></td>
-                  <td>
-                    <a class="btn-link" href="<?= gaia_url('account/booking.php') ?>?type=<?= urlencode($b['type']) ?>&id=<?= (int)$b['id'] ?>">
-                      <?= htmlspecialchars(t('account.view_details')) ?>
-                    </a>
-                  </td>
-                </tr>
-              <?php endforeach; ?>
-            </tbody>
-          </table>
+            <?php endforeach; ?>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- PAGINATION -->
+      <?php if ($pages > 1): ?>
+        <div class="pagination">
+          <div class="info">
+            <?= htmlspecialchars(t('account.showing')) ?> <?= (int)($offset + 1) ?>–<?= (int)min($total, $offset + $perPage) ?> <?= htmlspecialchars(t('account.of')) ?> <?= (int)$total ?>
+          </div>
+          <div class="pages">
+            <?php if ($page > 1): ?>
+              <a href="<?= htmlspecialchars(bookings_url(['page' => $page - 1])) ?>">&laquo;</a>
+            <?php endif; ?>
+            <?php for ($i = 1; $i <= $pages; $i++): ?>
+              <?php if ($i === $page): ?>
+                <span class="current"><?= (int)$i ?></span>
+              <?php else: ?>
+                <a href="<?= htmlspecialchars(bookings_url(['page' => $i])) ?>"><?= (int)$i ?></a>
+              <?php endif; ?>
+            <?php endfor; ?>
+            <?php if ($page < $pages): ?>
+              <a href="<?= htmlspecialchars(bookings_url(['page' => $page + 1])) ?>">&raquo;</a>
+            <?php endif; ?>
+          </div>
         </div>
-      <?php endforeach; ?>
+      <?php endif; ?>
     <?php endif; ?>
   </div>
 </div>

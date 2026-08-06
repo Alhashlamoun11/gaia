@@ -117,9 +117,15 @@ if (preg_match('#^/(en|ar)/(about|contact)$#', $p, $m)) {
         $query['lang'] = $m[1];
         return ['logout.php', $query];
     }
-    if (preg_match('#^/(en|ar)/account/(profile|my-bookings|claim-booking)$#', $p, $m)) {
+if (preg_match('#^/(en|ar)/account/(dashboard|bookings|payments|invoices|profile|security|claim-booking|my-bookings)$#', $p, $m)) {
         $query['lang'] = $m[1];
-        return ['account/' . $m[2] . '.php', $query];
+        $file = $m[2] === 'dashboard' ? 'index' : $m[2];
+        return ['account/' . $file . '.php', $query];
+    }
+    if (preg_match('#^/(en|ar)/account/(bookings|booking)/([A-Za-z0-9\-]+)$#', $p, $m)) {
+        $query['lang'] = $m[1];
+        $query['reference'] = $m[3];
+        return ['account/booking.php', $query];
     }
     if (preg_match('#^/(en|ar)/account$#', $p, $m)) {
         $query['lang'] = $m[1];

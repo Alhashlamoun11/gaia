@@ -5,10 +5,18 @@
  * My Payments — lists all payment records for the logged-in
  * customer, ownership-scoped via PaymentService.
  *
+ * Columns:
+ *   Payment Reference, Booking Reference, Amount, Currency,
+ *   Method, Status, Date
+ *
+ * Features:
+ *   - Status filters (Paid / Pending / Failed / Refunded / All)
+ *   - Pagination
+ *
  * SECURITY: PaymentService::getUserPayments() scopes every query
- * to the authenticated user_id, so a user can never see another
- * user's payments (prevents IDOR). Gateway responses are never
- * rendered here — only safe metadata (amount, status, method).
+ * to the authenticated user_id (prevents IDOR). Gateway responses
+ * are never rendered — only safe metadata (amount, status, method).
+ * All output is XSS-escaped; PDO prepared statements used.
  * ------------------------------------------------------------
  */
 require_once __DIR__ . '/../components/bootstrap.php';
@@ -23,8 +31,54 @@ $gaia_header_style = 'solid';
 
 require_login();
 
-$userId  = (int)auth_id();
+$userId = (int)auth_id();
+
+// ------------------------------------------------------------
+// Status filter
+// ------------------------------------------------------------
+$statusFilter = trim($_GET['status'] ?? '');
+$allowedStatuses = payment_status_list(); // pending, authorized, paid, failed, cancelled, refunded
+if ($statusFilter !== '' && !in_array($statusFilter, $allowedStatuses, true)) {
+    $statusFilter = '';
+}
+
+// Ownership-scoped payments
 $payments = PaymentService::getUserPayments($userId);
+
+// Apply status filter
+if ($statusFilter !== '') {
+    $payments = array_values(array_filter($payments, function ($p) use ($statusFilter) {
+        return normalize_payment_status($p['status'] ?? '') === $statusFilter;
+    }));
+}
+
+// ------------------------------------------------------------
+// Pagination
+// ------------------------------------------------------------
+$perPage = 10;
+$total   = count($payments);
+$pages   = max(1, (int)ceil($total / $perPage));
+$page    = max(1, (int)($_GET['page'] ?? 1));
+if ($page > $pages) {
+    $page = $pages;
+}
+$offset   = ($page - 1) * $perPage;
+$pageRows = array_slice($payments, $offset, $perPage);
+
+// Helper to build a filtered/paginated URL preserving query params
+function payments_url(array $overrides = []): string
+{
+    $q = $_GET;
+    foreach ($overrides as $k => $v) {
+        if ($v === '' || $v === null) {
+            unset($q[$k]);
+        } else {
+            $q[$k] = $v;
+        }
+    }
+    unset($q['lang']);
+    return 'payments.php?' . http_build_query($q);
+}
 ?>
 <!DOCTYPE html>
 <html lang="<?= htmlspecialchars(gaia_current_lang()) ?>" dir="<?= gaia_dir() ?>">
@@ -57,22 +111,31 @@ a{text-decoration:none;color:inherit;}
 .account-logout-btn{width:100%;display:flex;align-items:center;gap:11px;padding:10px 12px;border:none;background:none;border-radius:10px;font-size:14px;color:#b3261e;cursor:pointer;font-family:inherit;}
 .account-logout-btn:hover{background:#fdecea;}
 .account-main{min-width:0;}
-.card{background:#fff;border:1px solid var(--line);border-radius:16px;padding:24px;box-shadow:var(--shadow);}
-.card h2{font-size:20px;margin-bottom:18px;}
+.card{background:#fff;border:1px solid var(--line);border-radius:16px;padding:24px;box-shadow:var(--shadow);margin-bottom:22px;}
+.card h2{font-size:20px;margin-bottom:4px;}
+.card .sub{color:var(--muted);font-size:14px;margin:0 0 18px;}
+.filters{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:18px;}
+.filters select,.filters a.filter-btn{padding:10px 14px;border:1px solid var(--line);border-radius:10px;font-size:13.5px;font-family:inherit;background:#fbfaf7;color:var(--ink);}
+.filters a.filter-btn{display:inline-flex;align-items:center;gap:6px;text-decoration:none;cursor:pointer;}
+.filters a.filter-btn:hover{background:#f4efe6;}
 .table-wrap{overflow-x:auto;}
-table{width:100%;border-collapse:collapse;min-width:560px;}
+table{width:100%;border-collapse:collapse;min-width:680px;}
 th,td{text-align:left;padding:12px 14px;border-bottom:1px solid #f0ede6;font-size:13.5px;}
 th{font-size:12px;text-transform:uppercase;letter-spacing:.4px;color:var(--muted);}
 td .code{font-weight:700;}
 .badge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:11.5px;font-weight:700;text-transform:uppercase;}
-.badge-confirmed{background:#e8f5ee;color:#1b6e43;}
+.badge-paid,.badge-authorized{background:#e8f5ee;color:#1b6e43;}
 .badge-pending{background:#fff3d6;color:#8a6d00;}
-.badge-cancelled{background:#fdecea;color:#b3261e;}
-.badge-paid{background:#e8f5ee;color:#1b6e43;}
-.badge-authorized{background:#e3eefe;color:#1f4fa0;}
-.badge-failed{background:#fdecea;color:#b3261e;}
+.badge-failed,.badge-cancelled{background:#fdecea;color:#b3261e;}
 .badge-refunded{background:#f0ece6;color:#6b6060;}
-.empty{color:var(--muted);font-size:14px;}
+.empty{color:var(--muted);font-size:14px;padding:20px 0;}
+/* Pagination */
+.pagination{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-top:18px;flex-wrap:wrap;font-size:13.5px;}
+.pagination .info{color:var(--muted);}
+.pagination .pages{display:flex;gap:6px;flex-wrap:wrap;}
+.pagination .pages a,.pagination .pages span{min-width:34px;height:34px;display:inline-flex;align-items:center;justify-content:center;border:1px solid var(--line);border-radius:8px;font-size:13px;color:var(--ink);background:#fff;text-decoration:none;}
+.pagination .pages a:hover{background:#f4efe6;}
+.pagination .pages span.current{background:var(--navy);color:#fff;border-color:var(--navy);font-weight:600;}
 @media (max-width:860px){.account-layout{grid-template-columns:1fr;}.account-nav{flex-direction:row;flex-wrap:wrap;}.account-logout-form{border-top:none;padding-top:0;}}
 </style>
 </head>
@@ -85,38 +148,84 @@ td .code{font-weight:700;}
 
   <div class="card">
     <h2><?= htmlspecialchars(t('account.my_payments')) ?></h2>
+    <p class="sub"><?= htmlspecialchars(t_fmt('account.total_payments', ['count' => $total])) ?></p>
 
-    <?php if (!$payments): ?>
-      <p class="empty"><?= htmlspecialchars(t('account.no_payments', 'No payments yet.')) ?></p>
+    <!-- FILTERS -->
+    <form method="get" action="payments.php" class="filters">
+      <select name="status" onchange="this.form.submit()">
+        <option value=""><?= htmlspecialchars(t('account.all_statuses')) ?></option>
+        <?php foreach ($allowedStatuses as $st): ?>
+          <option value="<?= htmlspecialchars($st) ?>" <?= $statusFilter === $st ? 'selected' : '' ?>><?= htmlspecialchars(payment_status_label($st)) ?></option>
+        <?php endforeach; ?>
+      </select>
+      <a class="filter-btn" href="<?= htmlspecialchars(payments_url(['status' => '', 'page' => ''])) ?>"><i class="fa-solid fa-rotate-left"></i> <?= htmlspecialchars(t('account.reset_filters')) ?></a>
+    </form>
+
+    <?php if (!$pageRows): ?>
+      <p class="empty"><?= htmlspecialchars(t('account.no_payments')) ?></p>
     <?php else: ?>
       <div class="table-wrap">
         <table>
           <thead>
             <tr>
-              <th><?= htmlspecialchars(t('account.payment_reference', 'Payment')) ?></th>
+              <th><?= htmlspecialchars(t('account.payment_reference')) ?></th>
               <th><?= htmlspecialchars(t('account.booking_reference')) ?></th>
-              <th><?= htmlspecialchars(t('account.service_name')) ?></th>
               <th><?= htmlspecialchars(t('account.amount')) ?></th>
+              <th><?= htmlspecialchars(t('account.currency')) ?></th>
               <th><?= htmlspecialchars(t('account.payment_method')) ?></th>
               <th><?= htmlspecialchars(t('account.status')) ?></th>
               <th><?= htmlspecialchars(t('account.date')) ?></th>
             </tr>
           </thead>
           <tbody>
-            <?php foreach ($payments as $p): ?>
+            <?php foreach ($pageRows as $p): ?>
+              <?php
+                $status = normalize_payment_status($p['status'] ?? '');
+                $ref = $p['booking_reference'] ?? '';
+              ?>
               <tr>
-                <td class="code">#<?= (int)$p['id'] ?></td>
-                <td><?= htmlspecialchars($p['booking_reference'] ?? '—') ?></td>
-                <td><?= htmlspecialchars(function_exists('booking_type_label') ? booking_type_label((string)$p['booking_type']) : $p['booking_type']) ?></td>
-                <td><?= htmlspecialchars(number_format((float)$p['amount'], 2)) ?> <?= htmlspecialchars($p['currency'] ?? '') ?></td>
+                <td class="code">#<?= (int)($p['id'] ?? 0) ?></td>
+                <td>
+                  <?php if ($ref !== ''): ?>
+                    <a class="btn-link" href="<?= gaia_url('account/booking.php') ?>?reference=<?= urlencode($ref) ?>"><?= htmlspecialchars($ref) ?></a>
+                  <?php else: ?>
+                    —
+                  <?php endif; ?>
+                </td>
+                <td><?= htmlspecialchars(number_format((float)($p['amount'] ?? 0), 2)) ?></td>
+                <td><?= htmlspecialchars($p['currency'] ?? 'USD') ?></td>
                 <td><?= htmlspecialchars($p['payment_method'] ?? '—') ?></td>
-                <td><span class="badge badge-<?= htmlspecialchars($p['status']) ?>"><?= htmlspecialchars(payment_status_label((string)$p['status'])) ?></span></td>
+                <td><span class="badge badge-<?= htmlspecialchars($status) ?>"><?= htmlspecialchars(payment_status_label($status)) ?></span></td>
                 <td><?= htmlspecialchars($p['created_at'] ?? '') ?></td>
               </tr>
             <?php endforeach; ?>
           </tbody>
         </table>
       </div>
+
+      <!-- PAGINATION -->
+      <?php if ($pages > 1): ?>
+        <div class="pagination">
+          <div class="info">
+            <?= htmlspecialchars(t('account.showing')) ?> <?= (int)($offset + 1) ?>–<?= (int)min($total, $offset + $perPage) ?> <?= htmlspecialchars(t('account.of')) ?> <?= (int)$total ?>
+          </div>
+          <div class="pages">
+            <?php if ($page > 1): ?>
+              <a href="<?= htmlspecialchars(payments_url(['page' => $page - 1])) ?>">&laquo;</a>
+            <?php endif; ?>
+            <?php for ($i = 1; $i <= $pages; $i++): ?>
+              <?php if ($i === $page): ?>
+                <span class="current"><?= (int)$i ?></span>
+              <?php else: ?>
+                <a href="<?= htmlspecialchars(payments_url(['page' => $i])) ?>"><?= (int)$i ?></a>
+              <?php endif; ?>
+            <?php endfor; ?>
+            <?php if ($page < $pages): ?>
+              <a href="<?= htmlspecialchars(payments_url(['page' => $page + 1])) ?>">&raquo;</a>
+            <?php endif; ?>
+          </div>
+        </div>
+      <?php endif; ?>
     <?php endif; ?>
   </div>
 </div>
@@ -124,3 +233,4 @@ td .code{font-weight:700;}
 <?php require __DIR__ . '/../components/gaia-footer.php'; ?>
 </body>
 </html>
+</content>

@@ -295,6 +295,14 @@ $stmt = $pdo->prepare(
         return $claimed;
     }
 
+/**
+     * Public accessor for the table-existence check (used by dashboards).
+     */
+    public static function tableExistsPublic(string $table): bool
+    {
+        return self::tableExists($table);
+    }
+
     /**
      * Does a table exist in the current schema?
      */

@@ -28,6 +28,60 @@ if (!function_exists('redirect_to')) {
     }
 }
 
+if (!function_exists('safe_redirect_target')) {
+    /**
+     * Validate an internal redirect target to prevent open-redirect.
+     * Only allows relative paths that start with '/' or a known base.
+     * Returns '' if the target is not safe (caller falls back).
+     */
+    function safe_redirect_target($target): string
+    {
+        $target = trim((string)$target);
+        if ($target === '' || $target === '#') {
+            return '';
+        }
+        // Reject absolute URLs (http/https//) and protocol-relative (//)
+        if (preg_match('#^(https?:)?//#i', $target)) {
+            return '';
+        }
+        // Reject control chars / backslashes
+        if (preg_match('/[\x00-\x1f\x7f\\\\]/', $target)) {
+            return '';
+        }
+        // Allow relative paths (e.g. checkout.php?route_id=.., ../weroad/booking.php)
+        if (strpos($target, '/') === 0 || strpos($target, '.') === 0 || strpos($target, 'index.php') === 0) {
+            return $target;
+        }
+        // Allow bare script names (e.g. checkout.php)
+        if (preg_match('/^[a-z0-9_\-]+\.php(\?.*)?$/i', $target)) {
+            return $target;
+        }
+        return '';
+    }
+}
+
+if (!function_exists('require_booking_login')) {
+    /**
+     * Require authentication for a booking flow and return the user to
+     * the original booking page after login.
+     *
+     * Guests are redirected to login.php?redirect=<safe internal path>.
+     */
+    function require_booking_login(?string $returnUrl = null)
+    {
+        Auth::startSession();
+        if (!Auth::check()) {
+            Auth::loginViaRememberToken();
+        }
+        if (Auth::check()) {
+            return;
+        }
+        $target = safe_redirect_target($returnUrl);
+        $query  = $target !== '' ? '?redirect=' . rawurlencode($target) : '';
+        redirect_to('login.php' . $query);
+    }
+}
+
 if (!function_exists('require_login')) {
     /**
      * Redirect to login if no authenticated user.
