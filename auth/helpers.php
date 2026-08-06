@@ -107,3 +107,146 @@ if (!function_exists('booking_status_label')) {
         return t('account.status_' . $status, $status);
     }
 }
+
+if (!function_exists('booking_status_list')) {
+    /**
+     * The canonical, unified list of booking statuses shared by all
+     * booking types (tours, hotels, rooms, events, transfers).
+     */
+    function booking_status_list(): array
+    {
+        return [
+            'pending',
+            'awaiting_payment',
+            'paid',
+            'confirmed',
+            'completed',
+            'cancelled',
+            'refunded',
+        ];
+    }
+}
+
+if (!function_exists('payment_status_list')) {
+    /**
+     * The canonical list of payment statuses.
+     */
+    function payment_status_list(): array
+    {
+        return [
+            'pending',
+            'authorized',
+            'paid',
+            'failed',
+            'cancelled',
+            'refunded',
+        ];
+    }
+}
+
+if (!function_exists('invoice_status_list')) {
+    /**
+     * The canonical list of invoice statuses.
+     */
+    function invoice_status_list(): array
+    {
+        return ['draft', 'issued', 'paid', 'void', 'cancelled'];
+    }
+}
+
+if (!function_exists('normalize_booking_status')) {
+    /**
+     * Map a (possibly legacy) booking status to the canonical set.
+     * Unknown statuses fall back to 'pending'.
+     */
+    function normalize_booking_status($status): string
+    {
+        $status = strtolower(trim((string)$status));
+        $allowed = booking_status_list();
+        return in_array($status, $allowed, true) ? $status : 'pending';
+    }
+}
+
+if (!function_exists('normalize_payment_status')) {
+    /**
+     * Map a (possibly legacy) payment status to the canonical set.
+     */
+    function normalize_payment_status($status): string
+    {
+        $status = strtolower(trim((string)$status));
+        $allowed = payment_status_list();
+        return in_array($status, $allowed, true) ? $status : 'pending';
+    }
+}
+
+if (!function_exists('booking_reference_prefix')) {
+    /**
+     * Return the GAIA reference prefix for a booking type.
+     *   transfer/taxi -> GAIA-TR-  tour -> GAIA-TO-
+     *   hotel -> GAIA-HO-  room -> GAIA-RO-  event -> GAIA-EV-
+     */
+    function booking_reference_prefix(string $type): string
+    {
+        static $map = [
+            'transfer' => 'GAIA-TR-',
+            'taxi'     => 'GAIA-TR-',
+            'tour'     => 'GAIA-TO-',
+            'hotel'    => 'GAIA-HO-',
+            'room'     => 'GAIA-RO-',
+            'event'    => 'GAIA-EV-',
+        ];
+        return $map[$type] ?? 'GAIA-';
+    }
+}
+
+if (!function_exists('payment_status_label')) {
+    /**
+     * Localized label for a payment status.
+     */
+    function payment_status_label(string $status): string
+    {
+        return t('account.status_' . $status, $status);
+    }
+}
+
+if (!function_exists('invoice_status_label')) {
+    /**
+     * Localized label for an invoice status.
+     */
+    function invoice_status_label(string $status): string
+    {
+        return t('account.status_' . $status, $status);
+    }
+}
+
+if (!function_exists('booking_status_badge_class')) {
+    /**
+     * Return the CSS badge class for a booking status.
+     */
+    function booking_status_badge_class(string $status): string
+    {
+        $class = 'badge badge-' . htmlspecialchars(normalize_booking_status($status));
+        return $class;
+    }
+}
+
+if (!function_exists('payment_status_badge_class')) {
+    /**
+     * Return the CSS badge class for a payment status.
+     */
+    function payment_status_badge_class(string $status): string
+    {
+        return 'badge badge-' . htmlspecialchars(normalize_payment_status($status));
+    }
+}
+
+if (!function_exists('timeline_action_label')) {
+    /**
+     * Localized label for a booking timeline action.
+     */
+    function timeline_action_label(string $action): string
+    {
+        $key = 'timeline.' . strtolower(str_replace(' ', '_', $action));
+        return t($key, $action);
+    }
+}

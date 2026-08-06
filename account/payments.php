@@ -1,17 +1,21 @@
 <?php
 /**
- * account/my-bookings.php
+ * account/payments.php
  * ------------------------------------------------------------
- * Booking history for the logged-in customer.
+ * My Payments — lists all payment records for the logged-in
+ * customer, ownership-scoped via PaymentService.
  *
- * Merges transfers (bookings) + tours (weroad_bookings) and
- * shows code, type, date, total and status for each.
+ * SECURITY: PaymentService::getUserPayments() scopes every query
+ * to the authenticated user_id, so a user can never see another
+ * user's payments (prevents IDOR). Gateway responses are never
+ * rendered here — only safe metadata (amount, status, method).
  * ------------------------------------------------------------
  */
 require_once __DIR__ . '/../components/bootstrap.php';
 require_once __DIR__ . '/../components/gaia-config.php';
 require_once __DIR__ . '/../auth/middleware.php';
 require_once __DIR__ . '/../auth/helpers.php';
+require_once __DIR__ . '/../services/PaymentService.php';
 
 $gaia_base         = '';
 $gaia_active       = 'home';
@@ -19,79 +23,15 @@ $gaia_header_style = 'solid';
 
 require_login();
 
-$userId = (int)auth_id();
-$pdo = getPDO();
-
-$bookings = [];
-
-// Transfers
-$stmt = $pdo->prepare(
-    "SELECT booking_code, booking_reference,
-            CONCAT_WS(' → ', origin, destination) AS title,
-            pickup_date AS date, total_price, status, 'transfer' AS type
-     FROM bookings WHERE user_id = ?"
-);
-$stmt->execute([$userId]);
-$bookings = array_merge($bookings, $stmt->fetchAll());
-
-// Tours
-$stmt = $pdo->prepare(
-    "SELECT wb.booking_code, wb.booking_reference,
-            COALESCE(NULLIF(wt.name, ''), 'GAIA Tour') AS title,
-            DATE(wb.created_at) AS date, wb.total_price, wb.status, 'tour' AS type
-     FROM weroad_bookings wb
-     LEFT JOIN weroad_trips wt ON wt.id = wb.trip_id
-     WHERE wb.user_id = ?"
-);
-$stmt->execute([$userId]);
-$bookings = array_merge($bookings, $stmt->fetchAll());
-
-// Hotels
-$stmt = $pdo->prepare(
-    "SELECT hb.booking_code, hb.booking_reference,
-            COALESCE(NULLIF(CONCAT_WS(' · ', h.name, IFNULL(hr.name, '')), ''), 'GAIA Hotel') AS title,
-            hb.check_in_date AS date, hb.total_price, hb.status, 'hotel' AS type
-     FROM hotel_bookings hb
-     LEFT JOIN hotels h ON h.id = hb.hotel_id
-     LEFT JOIN hotel_rooms hr ON hr.id = hb.room_id
-     WHERE hb.user_id = ?"
-);
-$stmt->execute([$userId]);
-$bookings = array_merge($bookings, $stmt->fetchAll());
-
-// Events
-$stmt = $pdo->prepare(
-    "SELECT eb.booking_code, eb.booking_reference,
-            COALESCE(NULLIF(ev.title, ''), 'GAIA Event') AS title,
-            DATE(eb.created_at) AS date, eb.total_price, eb.status, 'event' AS type
-     FROM event_bookings eb
-     LEFT JOIN events ev ON ev.id = eb.event_id
-     WHERE eb.user_id = ?"
-);
-$stmt->execute([$userId]);
-$bookings = array_merge($bookings, $stmt->fetchAll());
-
-// Taxi
-$stmt = $pdo->prepare(
-    "SELECT tb.booking_code, tb.booking_reference,
-            CONCAT_WS(' → ', tb.origin, tb.destination) AS title,
-            tb.pickup_date AS date, tb.total_price, tb.status, 'taxi' AS type
-     FROM taxi_bookings tb WHERE tb.user_id = ?"
-);
-$stmt->execute([$userId]);
-$bookings = array_merge($bookings, $stmt->fetchAll());
-
-// Sort by date desc (string-safe fallback)
-usort($bookings, function ($a, $b) {
-    return strcmp((string)$b['date'], (string)$a['date']);
-});
+$userId  = (int)auth_id();
+$payments = PaymentService::getUserPayments($userId);
 ?>
 <!DOCTYPE html>
 <html lang="<?= htmlspecialchars(gaia_current_lang()) ?>" dir="<?= gaia_dir() ?>">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<?= gaia_seo_tags('account_bookings', t('account.my_bookings') . ' — GAIA TOURS &amp; TRAVEL') ?>
+<?= gaia_seo_tags('account_payments', t('account.my_payments') . ' — GAIA TOURS &amp; TRAVEL') ?>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700;800&family=Inter:wght@400;500;600;700&family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
@@ -128,6 +68,10 @@ td .code{font-weight:700;}
 .badge-confirmed{background:#e8f5ee;color:#1b6e43;}
 .badge-pending{background:#fff3d6;color:#8a6d00;}
 .badge-cancelled{background:#fdecea;color:#b3261e;}
+.badge-paid{background:#e8f5ee;color:#1b6e43;}
+.badge-authorized{background:#e3eefe;color:#1f4fa0;}
+.badge-failed{background:#fdecea;color:#b3261e;}
+.badge-refunded{background:#f0ece6;color:#6b6060;}
 .empty{color:var(--muted);font-size:14px;}
 @media (max-width:860px){.account-layout{grid-template-columns:1fr;}.account-nav{flex-direction:row;flex-wrap:wrap;}.account-logout-form{border-top:none;padding-top:0;}}
 </style>
@@ -137,35 +81,37 @@ td .code{font-weight:700;}
 <?php require __DIR__ . '/../components/gaia-header.php'; ?>
 
 <div class="account-shell">
-  <?php $activeTab = 'bookings'; require __DIR__ . '/_layout.php'; ?>
+  <?php $activeTab = 'payments'; require __DIR__ . '/_layout.php'; ?>
 
   <div class="card">
-    <h2><?= htmlspecialchars(t('account.my_bookings')) ?></h2>
+    <h2><?= htmlspecialchars(t('account.my_payments')) ?></h2>
 
-    <?php if (!$bookings): ?>
-      <p class="empty"><?= htmlspecialchars(t('account.no_bookings')) ?></p>
+    <?php if (!$payments): ?>
+      <p class="empty"><?= htmlspecialchars(t('account.no_payments', 'No payments yet.')) ?></p>
     <?php else: ?>
       <div class="table-wrap">
         <table>
           <thead>
             <tr>
-              <th><?= htmlspecialchars(t('account.booking_code')) ?></th>
-              <th><?= htmlspecialchars(t('account.type')) ?></th>
-              <th><?= htmlspecialchars(t('account.booking_summary')) ?></th>
-              <th><?= htmlspecialchars(t('account.date')) ?></th>
-              <th><?= htmlspecialchars(t('account.total')) ?></th>
+              <th><?= htmlspecialchars(t('account.payment_reference', 'Payment')) ?></th>
+              <th><?= htmlspecialchars(t('account.booking_reference')) ?></th>
+              <th><?= htmlspecialchars(t('account.service_name')) ?></th>
+              <th><?= htmlspecialchars(t('account.amount')) ?></th>
+              <th><?= htmlspecialchars(t('account.payment_method')) ?></th>
               <th><?= htmlspecialchars(t('account.status')) ?></th>
+              <th><?= htmlspecialchars(t('account.date')) ?></th>
             </tr>
           </thead>
           <tbody>
-<?php foreach ($bookings as $b): ?>
+            <?php foreach ($payments as $p): ?>
               <tr>
-                <td class="code"><?= htmlspecialchars($b['booking_reference'] ?: $b['booking_code']) ?></td>
-                <td><?= htmlspecialchars(booking_type_label($b['type'])) ?></td>
-                <td><?= htmlspecialchars($b['title']) ?></td>
-                <td><?= htmlspecialchars($b['date']) ?></td>
-                <td><?= htmlspecialchars(number_format((float)$b['total_price'], 2)) ?></td>
-                <td><span class="badge badge-<?= htmlspecialchars($b['status']) ?>"><?= htmlspecialchars(booking_status_label($b['status'])) ?></span></td>
+                <td class="code">#<?= (int)$p['id'] ?></td>
+                <td><?= htmlspecialchars($p['booking_reference'] ?? '—') ?></td>
+                <td><?= htmlspecialchars(function_exists('booking_type_label') ? booking_type_label((string)$p['booking_type']) : $p['booking_type']) ?></td>
+                <td><?= htmlspecialchars(number_format((float)$p['amount'], 2)) ?> <?= htmlspecialchars($p['currency'] ?? '') ?></td>
+                <td><?= htmlspecialchars($p['payment_method'] ?? '—') ?></td>
+                <td><span class="badge badge-<?= htmlspecialchars($p['status']) ?>"><?= htmlspecialchars(payment_status_label((string)$p['status'])) ?></span></td>
+                <td><?= htmlspecialchars($p['created_at'] ?? '') ?></td>
               </tr>
             <?php endforeach; ?>
           </tbody>

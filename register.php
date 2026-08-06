@@ -16,6 +16,7 @@ require_once __DIR__ . '/components/bootstrap.php';
 require_once __DIR__ . '/components/gaia-config.php';
 require_once __DIR__ . '/auth/Auth.php';
 require_once __DIR__ . '/auth/csrf.php';
+require_once __DIR__ . '/auth/BookingRepository.php';
 
 $gaia_base         = '';
 $gaia_active       = 'home';
@@ -72,9 +73,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             'preferred_language'  => $prefLang,
             'password'            => $password,
         ]);
-        if (!$ok) {
+if (!$ok) {
             $errors[] = t('auth.email_taken');
         } else {
+            // Auto-claim any guest bookings made with this email before
+            // registration so they appear in the new account immediately.
+            $claimed = BookingRepository::claimBookingsByEmail((int)$user['id'], $old['email']);
+
             // Auto-login
             Auth::login($old['email'], $password, false);
             header('Location: account/index.php');

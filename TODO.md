@@ -1,39 +1,26 @@
-# GAIA Authentication & Account System — Implementation TODO
+# GAIA — Unified Booking & Payment Architecture — Implementation Todo
 
-## Steps
-- [x] Analyze existing codebase (config, db, bootstrap, router, header, schemas)
-- [x] Create implementation plan (approved)
+Task: Prepare a scalable unified booking + payment workflow for Tours, Hotel
+Rooms, Events and Transfers, ready for future CyberSource — WITHOUT DB redesign,
+NO CyberSource integration, NO real payment processing.
 
-## Database
-- [ ] Create `schema-migration-auth.sql` (roles, permissions, users, hotels_users, payments, booking tables, ALTERs)
-- [ ] Register migration in `_run_migrations.php`
-- [ ] Run migration against DB
+## Status of existing work (already in repo & passing `_verify_architecture.php`)
+- [x] Tables created: `payments`, `payment_transactions`, `invoices`, `booking_logs`, `room_bookings`
+- [x] Tables modified: `booking_reference` + expanded status ENUM + user_id on all booking tables
+- [x] Services: BookingReferenceService, BookingTimelineService, BookingSummaryService, PaymentService, InvoiceService, GatewayManager, BookingService, ReportingService
+- [x] Helpers: booking_status_list, payment_status_list, invoice_status_list, normalize_*, *_label, booking_reference_prefix, *_badge_class, timeline_action_label
+- [x] Customer details page uses reusable `components/booking-summary.php`
+- [x] My Payments / My Invoices pages + nav
 
-## Auth Core
-- [ ] Create `auth/Auth.php` (register, login, logout, throttle, remember-me, hashing)
-- [ ] Create `auth/csrf.php` (tokens)
-- [ ] Create `auth/middleware.php` (require login/role/permission)
-- [ ] Create `auth/helpers.php` (auth_user, auth_check, auth_role, escaping)
-
-## Auth Pages
-- [ ] Create `login.php`
-- [ ] Create `register.php`
-- [ ] Create `forgot-password.php`
-- [ ] Create `reset-password.php`
-- [ ] Create `logout.php`
-
-## Account Pages
-- [ ] Create `account/index.php` (dashboard)
-- [ ] Create `account/profile.php`
-- [ ] Create `account/my-bookings.php`
-- [ ] Create `account/claim-booking.php`
-
-## Header + Routing + i18n
-- [ ] Update `components/gaia-header.php` (auth-aware nav)
-- [ ] Update `.htaccess` routes
-- [ ] Update `router.php` routes
-- [ ] Add EN/AR translations for auth/account
+## Integration work
+- [x] 1. `process_booking.php` (transfer) wired to: generate GAIA reference, store `booking_reference`, log "Booking Created" timeline, create payment
+- [x] 2. `weroad/process_booking.php` (tour) wired to: generate GAIA reference, store `booking_reference`, log "Booking Created" timeline, create payment
+- [x] 3. `BookingSummaryService::findByReference()` + `tableForType()` added (IDOR-scoped)
+- [x] 4. `_verify_flow.php` smoke test created — exercises booking → payment → invoice → timeline flow end-to-end
+- [x] 5. `php -l` passed on all changed/key files; migration-11 applied; flow verify script green
+- [x] 6. Final implementation report produced (deliverables)
 
 ## Verification
-- [ ] Run migration
-- [ ] Smoke-test auth flow
+- `_verify_architecture.php` — schema/service architecture checks (passing)
+- `_verify_flow.php` — end-to-end flow smoke test (ALL FLOW CHECKS PASSED)
+- `php -l` — no syntax errors in any service or booking-processing file

@@ -16,8 +16,17 @@
 require_once __DIR__ . '/db.php';
 require_once __DIR__ . '/config.php';
 require_once __DIR__ . '/../components/gaia-config.php';
+require_once __DIR__ . '/../auth/helpers.php';
+require_once __DIR__ . '/../auth/Auth.php';
+require_once __DIR__ . '/../services/BookingReferenceService.php';
+require_once __DIR__ . '/../services/BookingTimelineService.php';
+require_once __DIR__ . '/../services/PaymentService.php';
+require_once __DIR__ . '/../services/BookingService.php';
 
 header('Content-Type: application/json; charset=utf-8');
+
+// Authenticated user id (0 = guest). Guest bookings keep user_id NULL.
+$authUserId = auth_check() ? (int)auth_id() : 0;
 
 // Only allow POST
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
@@ -128,8 +137,11 @@ try {
 
     $totalPrice = round($basePrice + $extrasTotal - $discount, 2);
 
-    // Booking code
+// Booking code
     $bookingCode = WR_BOOKING_CODE_PREFIX . strtoupper(substr(uniqid(), -8));
+
+    // Generate a unique GAIA booking reference (GAIA-TO-XXXXXX)
+    $bookingReference = BookingReferenceService::generate('tour');
 
     // ============================================================
     // DATABASE TRANSACTION
@@ -137,32 +149,42 @@ try {
     $pdo->beginTransaction();
 
     try {
+// Authenticated user (0 = guest). Guest bookings keep user_id NULL.
+        $userId = $authUserId > 0 ? $authUserId : null;
+
         // Insert the booking
         $insertBooking = $pdo->prepare(
             "INSERT INTO weroad_bookings
-               (booking_code, trip_id, departure_id, promo_code_id,
+               (booking_code, booking_reference, trip_id, departure_id, user_id, promo_code_id,
                 full_name, email, phone,
+                guest_name, guest_email, guest_phone,
                 travellers_female, travellers_male, mixed_room,
                 flexible_cancellation, private_room,
                 base_price, flexible_fee, private_room_fee, discount, total_price,
                 status)
              VALUES
-               (:booking_code, :trip_id, :departure_id, :promo_code_id,
+               (:booking_code, :booking_reference, :trip_id, :departure_id, :user_id, :promo_code_id,
                 :full_name, :email, :phone,
+                :guest_name, :guest_email, :guest_phone,
                 :travellers_female, :travellers_male, :mixed_room,
                 :flexible_cancellation, :private_room,
-                :base_price, :flexible_fee, :private_room_fee, :discount, :total_price,
-                'pending')"
+:base_price, :flexible_fee, :private_room_fee, :discount, :total_price,
+                'awaiting_payment')"
         );
 
         $insertBooking->execute([
             ':booking_code'         => $bookingCode,
+            ':booking_reference'    => $bookingReference,
             ':trip_id'              => $tripId,
             ':departure_id'         => $departureId,
+            ':user_id'              => $userId,
             ':promo_code_id'        => $promoId,
             ':full_name'            => $fullName,
             ':email'                => $email,
             ':phone'                => $phone !== '' ? $phone : null,
+            ':guest_name'           => $fullName,
+            ':guest_email'          => $email,
+            ':guest_phone'          => $phone !== '' ? $phone : null,
             ':travellers_female'    => $female,
             ':travellers_male'      => $male,
             ':mixed_room'           => $mixedRoom,
@@ -175,7 +197,25 @@ try {
             ':total_price'          => $totalPrice,
         ]);
 
-        $bookingId = (int)$pdo->lastInsertId();
+$bookingId = (int)$pdo->lastInsertId();
+
+        // Log the "Booking Created" timeline event.
+        BookingTimelineService::logBookingCreated('tour', $bookingId, $authUserId, $bookingReference);
+
+        // Create the unified payment record (pending) linked to this booking.
+        // Gateway-independent readiness layer — no CyberSource code yet.
+        PaymentService::createPayment(
+            $authUserId,
+            'tour',
+            $bookingId,
+            $bookingReference,
+            (float)$totalPrice,
+            defined('WR_CURRENCY_SYMBOL') ? WR_CURRENCY_SYMBOL : 'EUR',
+            'card',        // payment method placeholder (future)
+            '',            // gateway name — left empty until CyberSource integration
+            PaymentService::STATUS_PENDING,
+            []             // gateway response — none yet
+        );
 
         // Insert extras line items
         $extras = [];
@@ -212,10 +252,11 @@ try {
 
         $pdo->commit();
 
-        echo json_encode([
+echo json_encode([
             'success'          => true,
             'message'          => 'Booking confirmed successfully!',
             'booking_code'     => $bookingCode,
+            'booking_reference'=> $bookingReference,
             'booking_id'       => $bookingId,
             'price_breakdown'  => [
                 'base_price'       => $basePrice,

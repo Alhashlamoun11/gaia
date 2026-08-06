@@ -12,6 +12,15 @@
 require_once __DIR__ . '/db.php';
 require_once __DIR__ . '/config.php';
 require_once __DIR__ . '/../components/gaia-config.php';
+require_once __DIR__ . '/../auth/helpers.php';
+require_once __DIR__ . '/../auth/Auth.php';
+
+// Pre-fill contact fields from the authenticated account (if logged in).
+// Guests keep the fields editable.
+$authUser = auth_check() ? auth_user() : null;
+$prefillName  = $authUser ? trim($authUser['first_name'] . ' ' . $authUser['last_name']) : '';
+$prefillEmail = $authUser ? $authUser['email'] : '';
+$prefillPhone = $authUser ? ($authUser['phone'] ?? '') : '';
 
 $tripId      = (int)($_GET['trip_id'] ?? 0);
 $departureId = (int)($_GET['departure_id'] ?? 0);
@@ -109,17 +118,17 @@ require __DIR__ . '/../components/gaia-header.php';
       <input type="hidden" name="start_date" value="<?php echo htmlspecialchars($departure['start_date']); ?>">
       <input type="hidden" name="end_date" value="<?php echo htmlspecialchars($departure['end_date']); ?>">
 
-      <div class="form-field" style="margin-bottom:18px;">
+<div class="form-field" style="margin-bottom:18px;">
         <label style="font-weight:700;font-size:14px;"><?= t('tours.booking_fullname') ?></label>
-        <input type="text" name="full_name" required style="width:100%;border:1.5px solid var(--border);border-radius:12px;padding:13px 14px;font-size:14.5px;font-family:inherit;outline:none;">
+        <input type="text" name="full_name" value="<?= htmlspecialchars($prefillName) ?>" required style="width:100%;border:1.5px solid var(--border);border-radius:12px;padding:13px 14px;font-size:14.5px;font-family:inherit;outline:none;">
       </div>
       <div class="form-field" style="margin-bottom:18px;">
         <label style="font-weight:700;font-size:14px;"><?= t('tours.booking_email') ?></label>
-        <input type="email" name="email" required style="width:100%;border:1.5px solid var(--border);border-radius:12px;padding:13px 14px;font-size:14.5px;font-family:inherit;outline:none;">
+        <input type="email" name="email" value="<?= htmlspecialchars($prefillEmail) ?>" required style="width:100%;border:1.5px solid var(--border);border-radius:12px;padding:13px 14px;font-size:14.5px;font-family:inherit;outline:none;">
       </div>
       <div class="form-field" style="margin-bottom:26px;">
         <label style="font-weight:700;font-size:14px;"><?= t('tours.booking_phone') ?></label>
-        <input type="tel" name="phone" style="width:100%;border:1.5px solid var(--border);border-radius:12px;padding:13px 14px;font-size:14.5px;font-family:inherit;outline:none;">
+        <input type="tel" name="phone" value="<?= htmlspecialchars($prefillPhone) ?>" style="width:100%;border:1.5px solid var(--border);border-radius:12px;padding:13px 14px;font-size:14.5px;font-family:inherit;outline:none;">
       </div>
 
       <h2><?= t('tours.booking_who') ?></h2>

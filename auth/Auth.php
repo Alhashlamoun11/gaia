@@ -28,20 +28,20 @@ class Auth
     const REMEMBER_TTL          = 30;    // days
     const PASSWORD_MIN_LENGTH   = 8;
 
-    /**
+/**
      * Start a secure session if one is not already active.
      */
     public static function startSession()
     {
         if (session_status() === PHP_SESSION_NONE) {
-            // session_set_cookie_params([
-            //     'lifetime' => 0,
-            //     'path'     => '/',
-            //     'httponly' => true,
-            //     'samesite' => 'Lax',
-            //     'secure'   => !empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off',
-            // ]);
-            // session_start();
+            session_set_cookie_params([
+                'lifetime' => 0,
+                'path'     => '/',
+                'httponly' => true,
+                'samesite' => 'Lax',
+                'secure'   => !empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off',
+            ]);
+            session_start();
         }
     }
 

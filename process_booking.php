@@ -23,8 +23,18 @@
 require_once __DIR__ . '/db.php';
 require_once __DIR__ . '/config.php';
 require_once __DIR__ . '/components/gaia-config.php';
+require_once __DIR__ . '/auth/helpers.php';
+require_once __DIR__ . '/auth/Auth.php';
+require_once __DIR__ . '/services/BookingReferenceService.php';
+require_once __DIR__ . '/services/BookingTimelineService.php';
+require_once __DIR__ . '/services/PaymentService.php';
+require_once __DIR__ . '/services/BookingService.php';
 
 header('Content-Type: application/json; charset=utf-8');
+
+// Look up the authenticated user (0 for guests). Guest bookings keep
+// user_id NULL and store guest identity fields instead.
+$authUserId = auth_check() ? (int)auth_id() : 0;
 
 // Only allow POST
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
@@ -177,8 +187,11 @@ try {
     // 5. Final total
     $totalPrice = round($basePrice + $returnFee + $extrasTotal - $discount, 2);
 
-    // Generate a unique booking code
+// Generate a unique booking code
     $bookingCode = BOOKING_CODE_PREFIX . strtoupper(substr(uniqid(), -8));
+
+    // Generate a unique GAIA booking reference (GAIA-TR-XXXXXX)
+    $bookingReference = BookingReferenceService::generate('transfer');
 
     // ============================================================
     // DATABASE TRANSACTION
@@ -186,30 +199,37 @@ try {
     $pdo->beginTransaction();
 
     try {
+// Authenticated user (0 = guest). Guest bookings keep user_id NULL.
+        $userId = $authUserId > 0 ? $authUserId : null;
+
         // Insert the booking
         $insertBooking = $pdo->prepare(
             "INSERT INTO bookings
-               (booking_code, route_id, car_class_id, promo_code_id,
+               (booking_code, booking_reference, route_id, car_class_id, user_id, promo_code_id,
                 origin, destination, pickup_date, pickup_time, passenger_count,
                 flight_number, arrival_time, destination_address, return_trip,
                 full_name, email, phone,
+                guest_name, guest_email, guest_phone,
                 child_seats, water_bottles, pet_carrier, women_driver, comments,
                 base_price, price_multiplier, return_fee, extras_total, discount, total_price,
                 status)
              VALUES
-               (:booking_code, :route_id, :car_class_id, :promo_code_id,
+               (:booking_code, :booking_reference, :route_id, :car_class_id, :user_id, :promo_code_id,
                 :origin, :destination, :pickup_date, :pickup_time, :passenger_count,
                 :flight_number, :arrival_time, :destination_address, :return_trip,
                 :full_name, :email, :phone,
-                :child_seats, :water_bottles, :pet_carrier, :women_driver, :comments,
+                :guest_name, :guest_email, :guest_phone,
+:child_seats, :water_bottles, :pet_carrier, :women_driver, :comments,
                 :base_price, :price_multiplier, :return_fee, :extras_total, :discount, :total_price,
-                'pending')"
+                'awaiting_payment')"
         );
 
         $insertBooking->execute([
             ':booking_code'        => $bookingCode,
+            ':booking_reference'   => $bookingReference,
             ':route_id'            => $routeId,
             ':car_class_id'        => $carClassId,
+            ':user_id'             => $userId,
             ':promo_code_id'       => $promoId,
             ':origin'              => $origin !== '' ? $origin : $route['origin'],
             ':destination'         => $destination !== '' ? $destination : $route['destination'],
@@ -223,6 +243,9 @@ try {
             ':full_name'           => $fullName,
             ':email'               => $email,
             ':phone'               => $phone,
+            ':guest_name'          => $fullName,
+            ':guest_email'         => $email,
+            ':guest_phone'         => $phone,
             ':child_seats'         => $childSeats,
             ':water_bottles'       => $waterBottles,
             ':pet_carrier'         => $petCarrier,
@@ -236,7 +259,26 @@ try {
             ':total_price'         => $totalPrice,
         ]);
 
-        $bookingId = (int)$pdo->lastInsertId();
+$bookingId = (int)$pdo->lastInsertId();
+
+        // Log the "Booking Created" timeline event.
+        BookingTimelineService::logBookingCreated('transfer', $bookingId, $authUserId, $bookingReference);
+
+        // Create the unified payment record (pending) linked to this booking.
+        // This is the gateway-independent "payment readiness" layer — no
+        // CyberSource code. A future gateway driver plugs in via GatewayManager.
+        PaymentService::createPayment(
+            $authUserId,
+            'transfer',
+            $bookingId,
+            $bookingReference,
+            (float)$totalPrice,
+            defined('CURRENCY') ? CURRENCY : 'USD',
+            'card',        // payment method placeholder (future)
+            '',            // gateway name — left empty until CyberSource integration
+            PaymentService::STATUS_PENDING,
+            []             // gateway response — none yet
+        );
 
         // Insert each extra line item
         $insertExtra = $pdo->prepare(
@@ -264,10 +306,11 @@ try {
         $pdo->commit();
 
         // Return JSON confirmation
-        echo json_encode([
+echo json_encode([
             'success'          => true,
             'message'          => 'Booking confirmed successfully!',
             'booking_code'     => $bookingCode,
+            'booking_reference'=> $bookingReference,
             'booking_id'       => $bookingId,
             'price_breakdown'  => [
                 'base_price'       => $basePrice,

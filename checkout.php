@@ -11,11 +11,20 @@
  */
 require_once __DIR__ . '/components/bootstrap.php';
 require_once __DIR__ . '/components/gaia-config.php';
+require_once __DIR__ . '/auth/helpers.php';
+require_once __DIR__ . '/auth/Auth.php';
 
 // Shared header/footer variables
 $gaia_base          = '';
 $gaia_active        = 'transfers';
 $gaia_header_style  = 'solid';
+
+// Pre-fill contact fields from the authenticated account (if logged in).
+// Guests keep the fields editable.
+$authUser = auth_check() ? auth_user() : null;
+$prefillName  = $authUser ? trim($authUser['first_name'] . ' ' . $authUser['last_name']) : '';
+$prefillEmail = $authUser ? $authUser['email'] : '';
+$prefillPhone = $authUser ? ($authUser['phone'] ?? '') : '';
 
 $routeId    = (int)($_GET['route_id'] ?? 0);
 $carClassId = (int)($_GET['car_class_id'] ?? 0);
@@ -149,12 +158,12 @@ $womenPrice     = transfer_extra_price('women_driver', defined('PRICE_WOMEN_DRIV
       <div class="card">
         <h2><?= t('checkout.passengers_title', 'Step 2. Passengers') ?></h2>
         <div class="form-row">
-          <div class="field"><label><?= t('checkout.name_label', 'Name and Surname') ?></label><input type="text" name="full_name" placeholder="<?= t('checkout.name_placeholder', 'e.g. John Watson') ?>" required></div>
-          <div class="field"><label><?= t('checkout.email_label', 'E-mail') ?></label><input type="email" name="email" placeholder="<?= t('checkout.email_placeholder', 'johnwatson@mail.com') ?>" required><div class="hint"><?= t('checkout.email_hint', 'We will send a booking confirmation, voucher, and reminder to this e-mail address') ?></div></div>
+<div class="field"><label><?= t('checkout.name_label', 'Name and Surname') ?></label><input type="text" name="full_name" value="<?= htmlspecialchars($prefillName) ?>" placeholder="<?= t('checkout.name_placeholder', 'e.g. John Watson') ?>" required></div>
+          <div class="field"><label><?= t('checkout.email_label', 'E-mail') ?></label><input type="email" name="email" value="<?= htmlspecialchars($prefillEmail) ?>" placeholder="<?= t('checkout.email_placeholder', 'johnwatson@mail.com') ?>" required><div class="hint"><?= t('checkout.email_hint', 'We will send a booking confirmation, voucher, and reminder to this e-mail address') ?></div></div>
         </div>
         <div class="field" style="max-width:400px;margin-bottom:22px;">
           <label><?= t('checkout.phone_label', 'Phone number') ?></label>
-          <div class="phone-input"><span class="flag">🇯🇴</span><input type="text" name="phone" placeholder="+962 7 9012 3456" required></div>
+          <div class="phone-input"><span class="flag">🇯🇴</span><input type="text" name="phone" value="<?= htmlspecialchars($prefillPhone) ?>" placeholder="+962 7 9012 3456" required></div>
           <div class="hint"><?= t('checkout.phone_hint', 'We need it for urgent communication with you. It must be available on the day of the transfer') ?></div>
         </div>
         <div class="divider"></div>

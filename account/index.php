@@ -159,7 +159,7 @@ a{text-decoration:none;color:inherit;}
             <span class="badge badge-<?= htmlspecialchars($b['status']) ?>"><?= htmlspecialchars(booking_status_label($b['status'])) ?></span>
           </div>
         <?php endforeach; ?>
-        <div style="margin-top:14px;"><a href="my-bookings.php" style="color:var(--teal);font-weight:600;font-size:14px;"><?= htmlspecialchars(t('account.my_bookings')) ?> →</a></div>
+<div style="margin-top:14px;"><a href="bookings.php" style="color:var(--teal);font-weight:600;font-size:14px;"><?= htmlspecialchars(t('account.my_bookings')) ?> →</a></div>
       <?php endif; ?>
     </div>
 

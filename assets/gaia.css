@@ -430,6 +430,21 @@ h6 {
     opacity: 1;
 }
 
+.gaia-bookings-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 20px;
+    height: 20px;
+    padding: 0 6px;
+    border-radius: 999px;
+    background: var(--gaia-gold, #c9a227);
+    color: #241a05;
+    font-size: 11.5px;
+    font-weight: 800;
+    line-height: 1;
+}
+
 /* Burger */
 .gaia-burger {
     display: none;

@@ -143,7 +143,7 @@ a{text-decoration:none;color:inherit;}
 <?php require __DIR__ . '/../components/gaia-header.php'; ?>
 
 <div class="account-shell">
-  <?php $activeTab = 'claim'; require __DIR__ . '/../account/_layout.php'; ?>
+<?php $activeTab = 'claim'; require __DIR__ . '/_layout.php'; ?>
 
   <div class="card">
     <h2><?= htmlspecialchars(t('account.claim_title')) ?></h2>

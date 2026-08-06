@@ -38,6 +38,16 @@ $gaiaAuthName   = $gaiaAuthed ? auth_name() : '';
 $gaiaAuthAvatar = $gaiaAuthed ? auth_avatar() : '';
 $gaiaAuthRole   = $gaiaAuthed ? auth_role() : 'guest';
 
+// Booking count badge for authenticated users (reuses the ownership
+// repository so it only counts the user's own bookings).
+$gaiaBookingCount = 0;
+if ($gaiaAuthed && $gaiaAuthUser) {
+    require_once __DIR__ . '/../auth/BookingRepository.php';
+    $gaiaBookingCount = (function_exists('BookingRepository') || class_exists('BookingRepository'))
+        ? BookingRepository::countUserBookings((int)$gaiaAuthUser['id'])
+        : 0;
+}
+
 // Resolve defaults
 $gaia_base         = $gaia_base         ?? '';
 $gaia_active       = $gaia_active       ?? 'home';
@@ -94,6 +104,13 @@ function gaia_icon_account() {
         <?= gaia_icon_whatsapp() ?>
       </a>
 <?php if ($gaiaAuthed): ?>
+        <a class="gaia-header-account" href="<?= gaia_url('account/bookings.php', $gaia_base) ?>" title="<?= htmlspecialchars(t('account.my_bookings')) ?>">
+          <i class="fa-solid fa-bookmark" style="font-size:15px;"></i>
+          <span><?= htmlspecialchars(t('account.my_bookings')) ?></span>
+          <?php if ($gaiaBookingCount > 0): ?>
+            <span class="gaia-bookings-badge"><?= (int)$gaiaBookingCount ?></span>
+          <?php endif; ?>
+        </a>
         <a class="gaia-header-account" href="<?= gaia_url('account/index.php', $gaia_base) ?>" title="<?= htmlspecialchars(t('header.my_account')) ?>">
           <img src="<?= htmlspecialchars($gaiaAuthAvatar) ?>" alt="" class="gaia-header-avatar">
           <span><?= htmlspecialchars($gaiaAuthName) ?></span>
@@ -127,10 +144,13 @@ function gaia_icon_account() {
       <?php endforeach; ?>
     </nav>
 <div class="gaia-mobile-actions">
-      <?php if ($gaiaAuthed): ?>
-        <a class="gaia-btn gaia-btn-block gaia-btn-ghost" href="<?= gaia_url('account/my-bookings.php', $gaia_base) ?>"><?= htmlspecialchars(t('account.my_bookings')) ?></a>
+<?php if ($gaiaAuthed): ?>
+        <a class="gaia-btn gaia-btn-block gaia-btn-ghost" href="<?= gaia_url('account/bookings.php', $gaia_base) ?>"><?= htmlspecialchars(t('account.my_bookings')) ?><?php if ($gaiaBookingCount > 0): ?> (<?= (int)$gaiaBookingCount ?>)<?php endif; ?></a>
         <a class="gaia-btn gaia-btn-block gaia-btn-ghost" href="<?= gaia_url('account/index.php', $gaia_base) ?>"><?= htmlspecialchars(t('header.my_account')) ?></a>
-        <a class="gaia-btn gaia-btn-block" href="<?= gaia_url('logout.php', $gaia_base) ?>"><?= htmlspecialchars(t('auth.logout')) ?></a>
+        <form method="post" action="<?= htmlspecialchars(gaia_url('logout.php', $gaia_base)) ?>" style="margin:0;">
+          <?php if (function_exists('csrf_field')) echo csrf_field(); ?>
+          <button type="submit" class="gaia-btn gaia-btn-block" style="width:100%;border:none;cursor:pointer;"><?= htmlspecialchars(t('auth.logout')) ?></button>
+        </form>
       <?php else: ?>
         <a class="gaia-btn gaia-btn-block gaia-btn-ghost" href="<?= gaia_url('login.php', $gaia_base) ?>"><?= htmlspecialchars(t('auth.login')) ?></a>
         <a class="gaia-btn gaia-btn-block" href="<?= gaia_url('register.php', $gaia_base) ?>"><?= htmlspecialchars(t('auth.register')) ?></a>

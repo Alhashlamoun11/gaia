@@ -29,8 +29,14 @@ $base = '../';
       <a href="<?= $base ?>account/index.php" class="<?= $activeTab === 'dashboard' ? 'active' : '' ?>">
         <i class="fa-solid fa-gauge-high"></i> <?= htmlspecialchars(t('account.dashboard')) ?>
       </a>
-      <a href="<?= $base ?>account/my-bookings.php" class="<?= $activeTab === 'bookings' ? 'active' : '' ?>">
+<a href="<?= $base ?>account/bookings.php" class="<?= $activeTab === 'bookings' ? 'active' : '' ?>">
         <i class="fa-solid fa-bookmark"></i> <?= htmlspecialchars(t('account.my_bookings')) ?>
+      </a>
+      <a href="<?= $base ?>account/payments.php" class="<?= $activeTab === 'payments' ? 'active' : '' ?>">
+        <i class="fa-solid fa-credit-card"></i> <?= htmlspecialchars(t('account.my_payments')) ?>
+      </a>
+      <a href="<?= $base ?>account/invoices.php" class="<?= $activeTab === 'invoices' ? 'active' : '' ?>">
+        <i class="fa-solid fa-file-invoice-dollar"></i> <?= htmlspecialchars(t('account.my_invoices')) ?>
       </a>
       <a href="<?= $base ?>account/claim-booking.php" class="<?= $activeTab === 'claim' ? 'active' : '' ?>">
         <i class="fa-solid fa-link"></i> <?= htmlspecialchars(t('account.claim_booking')) ?>
