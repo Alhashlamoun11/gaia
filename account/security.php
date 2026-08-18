@@ -21,6 +21,7 @@ require_once __DIR__ . '/../components/gaia-config.php';
 require_once __DIR__ . '/../auth/middleware.php';
 require_once __DIR__ . '/../auth/helpers.php';
 require_once __DIR__ . '/../auth/csrf.php';
+require_once __DIR__ . '/../services/SessionService.php';
 
 $gaia_base         = '';
 $gaia_active       = 'home';
@@ -73,116 +74,154 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
 }
+
+// Record the current session (best-effort) + list recent sessions.
+SessionService::record($userId, $_SERVER['HTTP_USER_AGENT'] ?? '', $_SERVER['REMOTE_ADDR'] ?? '');
+$sessions = SessionService::listRecent($userId, 10);
+$currentHash = SessionService::currentHash();
+
+$gaia_page_key   = 'account_security';
+$gaia_page_title = t('account.security') . ' — GAIA TOURS &amp; TRAVEL';
+$activeTab = 'security';
 ?>
 <!DOCTYPE html>
 <html lang="<?= htmlspecialchars(gaia_current_lang()) ?>" dir="<?= gaia_dir() ?>">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<?= gaia_seo_tags('account_security', t('account.security') . ' — GAIA TOURS &amp; TRAVEL') ?>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700;800&family=Inter:wght@400;500;600;700&family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-<link rel="stylesheet" href="/assets/gaia.css">
-<style>
-:root{--navy:#1b2a4a;--navy-2:#243761;--teal:#1f6f8f;--teal-dark:#175a75;--ink:#1c1e26;--muted:#6b7280;--line:#e8e6e0;--bg-soft:#f4efe6;--white:#fff;--radius:14px;--shadow:0 10px 30px rgba(27,42,74,0.08);}
-*{box-sizing:border-box;}body{margin:0;font-family:'Inter',sans-serif;color:var(--ink);background:var(--bg-soft);-webkit-font-smoothing:antialiased;}
-h1,h2,h3{font-family:'Playfair Display',serif;margin:0;}a{text-decoration:none;color:inherit;}
-.account-shell{max-width:1280px;margin:0 auto;padding:32px;}
-.account-layout{display:grid;grid-template-columns:260px 1fr;gap:26px;align-items:start;}
-.account-sidebar{background:#fff;border:1px solid var(--line);border-radius:18px;padding:20px;box-shadow:var(--shadow);}
-.account-sidebar-user{display:flex;gap:12px;align-items:center;padding-bottom:16px;border-bottom:1px solid var(--line);margin-bottom:14px;}
-.account-sidebar-user strong{display:block;font-size:14.5px;}
-.account-sidebar-user span{display:block;font-size:12px;color:var(--muted);word-break:break-all;}
-.account-avatar{width:48px;height:48px;border-radius:50%;object-fit:cover;background:var(--navy);}
-.account-nav{display:flex;flex-direction:column;gap:4px;}
-.account-nav a{display:flex;align-items:center;gap:11px;padding:10px 12px;border-radius:10px;font-size:14px;color:var(--ink);transition:.15s;}
-.account-nav a:hover{background:#f4efe6;}
-.account-nav a.active{background:var(--navy);color:#fff;font-weight:600;}
-.account-nav i{width:18px;text-align:center;}
-.account-logout-form{margin-top:16px;border-top:1px solid var(--line);padding-top:14px;}
-.account-logout-btn{width:100%;display:flex;align-items:center;gap:11px;padding:10px 12px;border:none;background:none;border-radius:10px;font-size:14px;color:#b3261e;cursor:pointer;font-family:inherit;}
-.account-logout-btn:hover{background:#fdecea;}
-.account-main{min-width:0;}
-.card{background:#fff;border:1px solid var(--line);border-radius:16px;padding:24px;box-shadow:var(--shadow);margin-bottom:22px;}
-.card h2{font-size:20px;margin-bottom:18px;}
-.field{margin-bottom:16px;}
-.field label{display:block;font-size:13px;font-weight:600;margin-bottom:6px;}
-.field input{width:100%;padding:12px 14px;border:1px solid var(--line);border-radius:10px;font-size:14px;font-family:inherit;background:#fbfaf7;transition:.2s;}
-.field input:focus{outline:none;border-color:var(--teal);box-shadow:0 0 0 3px rgba(31,111,143,.12);background:#fff;}
-.btn-primary{background:var(--teal);border:none;border-radius:10px;padding:13px 26px;color:#fff;font-size:15px;font-weight:700;cursor:pointer;transition:.2s;font-family:inherit;}
-.btn-primary:hover{background:var(--teal-dark);}
-.alert{background:#e8f5ee;color:#1b6e43;border:1px solid #b9e4cb;border-radius:10px;padding:12px 14px;font-size:13.5px;margin-bottom:18px;}
-.alert-error{background:#fdecea;color:#b3261e;border-color:#f5c6c2;}
-.alert-success{background:#e8f5ee;color:#1b6e43;border-color:#b9e4cb;}
-.alert ul{margin:0;padding-left:18px;}
-.list-item{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid #f0ede6;font-size:13.5px;flex-wrap:wrap;}
-.list-item:last-child{border-bottom:none;}
-.list-item .label{color:var(--muted);}
-.list-item .value{font-weight:600;text-align:right;word-break:break-word;}
-.badge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:11.5px;font-weight:700;text-transform:uppercase;}
-.badge-verified,.badge-active{background:#e8f5ee;color:#1b6e43;}
-.badge-unverified{background:#fff3d6;color:#8a6d00;}
-@media (max-width:860px){.account-layout{grid-template-columns:1fr;}.account-nav{flex-direction:row;flex-wrap:wrap;}.account-logout-form{border-top:none;padding-top:0;}}
-</style>
+<?php require __DIR__ . '/../components/account-head.php'; ?>
 </head>
 <body>
 
 <?php require __DIR__ . '/../components/gaia-header.php'; ?>
 
 <div class="account-shell">
-  <?php $activeTab = 'security'; require __DIR__ . '/_layout.php'; ?>
+  <?php
+    $crumbs = [
+        ['label' => t('account.dashboard'), 'url' => gaia_url('account/index.php')],
+        ['label' => t('account.security'), 'url' => ''],
+    ];
+    require __DIR__ . '/../components/breadcrumbs.php';
+  ?>
+  <div class="account-layout">
+    <?php require __DIR__ . '/../components/user-sidebar.php'; ?>
+    <main class="account-main">
+      <?php
+        $account_alerts = array_merge(
+            array_map(function ($e) { return ['type' => 'error', 'msg' => $e]; }, $errors),
+            $alerts
+        );
+        require __DIR__ . '/../components/alert.php';
+      ?>
 
-  <div class="card">
-    <h2><?= htmlspecialchars(t('account.security')) ?></h2>
+<div class="card">
+        <h2><?= htmlspecialchars(t('account.change_password')) ?></h2>
 
-    <?php if ($errors): ?>
-      <div class="alert alert-error"><ul><?php foreach ($errors as $err): ?><li><?= htmlspecialchars($err) ?></li><?php endforeach; ?></ul></div>
-    <?php endif; ?>
-    <?php foreach ($alerts as $alert): ?>
-      <div class="alert alert-<?= htmlspecialchars($alert['type']) ?>"><?= htmlspecialchars($alert['msg']) ?></div>
-    <?php endforeach; ?>
-
-    <form method="post" action="security.php" novalidate>
-      <?= csrf_field() ?>
-      <div class="field">
-        <label for="current_password"><?= htmlspecialchars(t('account.current_password')) ?> *</label>
-        <input type="password" id="current_password" name="current_password" required autocomplete="current-password">
+        <form method="post" action="security.php" novalidate>
+          <?= csrf_field() ?>
+          <div class="field">
+            <label for="current_password"><?= htmlspecialchars(t('account.current_password')) ?> *</label>
+            <input type="password" id="current_password" name="current_password" required autocomplete="current-password">
+          </div>
+          <div class="field">
+            <label for="new_password"><?= htmlspecialchars(t('account.new_password')) ?> *</label>
+            <input type="password" id="new_password" name="new_password" required autocomplete="new-password" oninput="checkStrength(this.value)">
+          </div>
+          <div class="field">
+            <label><?= htmlspecialchars(t('account.password_strength')) ?></label>
+            <div class="strength-meter">
+              <div class="strength-seg" id="seg1"></div>
+              <div class="strength-seg" id="seg2"></div>
+              <div class="strength-seg" id="seg3"></div>
+              <div class="strength-seg" id="seg4"></div>
+            </div>
+            <div class="strength-label" id="strengthLabel"></div>
+          </div>
+          <div class="field">
+            <label for="confirm_password"><?= htmlspecialchars(t('account.confirm_password')) ?> *</label>
+            <input type="password" id="confirm_password" name="confirm_password" required autocomplete="new-password">
+          </div>
+          <button type="submit" class="btn-primary"><?= htmlspecialchars(t('account.change_password')) ?></button>
+        </form>
       </div>
-      <div class="field">
-        <label for="new_password"><?= htmlspecialchars(t('account.new_password')) ?> *</label>
-        <input type="password" id="new_password" name="new_password" required autocomplete="new-password">
-      </div>
-      <div class="field">
-        <label for="confirm_password"><?= htmlspecialchars(t('account.confirm_password')) ?> *</label>
-        <input type="password" id="confirm_password" name="confirm_password" required autocomplete="new-password">
-      </div>
-      <button type="submit" class="btn-primary"><?= htmlspecialchars(t('account.change_password')) ?></button>
-    </form>
-  </div>
 
-  <div class="card">
-    <h2><?= htmlspecialchars(t('account.security_info')) ?></h2>
-    <div class="list-item">
-      <span class="label"><?= htmlspecialchars(t('account.created_at')) ?></span>
-      <span class="value"><?= htmlspecialchars($user['created_at'] ?? '—') ?></span>
-    </div>
-    <div class="list-item">
-      <span class="label"><?= htmlspecialchars(t('account.last_login')) ?></span>
-      <span class="value"><?= htmlspecialchars($user['last_login_at'] ? $user['last_login_at'] : '—') ?></span>
-    </div>
-    <div class="list-item">
-      <span class="label"><?= htmlspecialchars(t('account.email_verified')) ?></span>
-      <span class="value">
-        <?php if (!empty($user['email_verified_at'])): ?>
-          <span class="badge badge-verified"><?= htmlspecialchars(t('account.verified')) ?></span>
+      <div class="card">
+        <h2><?= htmlspecialchars(t('account.security_info')) ?></h2>
+        <div class="list-item">
+          <span class="label"><?= htmlspecialchars(t('account.created_at')) ?></span>
+          <span class="value"><?= htmlspecialchars($user['created_at'] ?? '—') ?></span>
+        </div>
+        <div class="list-item">
+          <span class="label"><?= htmlspecialchars(t('account.last_login')) ?></span>
+          <span class="value"><?= htmlspecialchars($user['last_login_at'] ? $user['last_login_at'] : '—') ?></span>
+        </div>
+        <div class="list-item">
+          <span class="label"><?= htmlspecialchars(t('account.email_verified')) ?></span>
+          <span class="value">
+            <?php if (!empty($user['email_verified_at'])): ?>
+              <span class="badge badge-verified"><?= htmlspecialchars(t('account.verified')) ?></span>
+            <?php else: ?>
+              <span class="badge badge-unverified"><?= htmlspecialchars(t('account.unverified')) ?></span>
+            <?php endif; ?>
+          </span>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="notif-head">
+          <h2><i class="fa-solid fa-laptop"></i> <?= htmlspecialchars(t('account.recent_sessions')) ?></h2>
+          <button type="button" class="btn btn-sm btn-ghost" onclick="alert('<?= htmlspecialchars(t('account.logout_all_placeholder')) ?>')">
+            <i class="fa-solid fa-right-from-bracket"></i> <?= htmlspecialchars(t('account.logout_all')) ?>
+          </button>
+        </div>
+        <?php if (!$sessions): ?>
+          <p class="sub"><?= htmlspecialchars(t('account.no_payment_records', 'No sessions recorded yet.')) ?></p>
         <?php else: ?>
-          <span class="badge badge-unverified"><?= htmlspecialchars(t('account.unverified')) ?></span>
+          <?php foreach ($sessions as $s): ?>
+            <?php $isCurrent = ($currentHash !== '' && hash_equals((string)$currentHash, (string)($s['session_hash'] ?? ''))); ?>
+            <div class="list-item">
+              <div>
+                <strong><?= htmlspecialchars($s['device'] ?? '—') ?></strong>
+                <div class="muted"><?= htmlspecialchars($s['ip_address'] ?: '—') ?> · <?= htmlspecialchars($s['last_activity'] ?: ($s['created_at'] ?? '')) ?></div>
+              </div>
+              <span>
+                <?php if ($isCurrent): ?>
+                  <span class="badge badge-active"><?= htmlspecialchars(t('account.current_session')) ?></span>
+                <?php else: ?>
+                  <span class="badge badge-draft"><?= htmlspecialchars(t('account.signed_out', 'Signed out')) ?></span>
+                <?php endif; ?>
+              </span>
+            </div>
+          <?php endforeach; ?>
         <?php endif; ?>
-      </span>
-    </div>
+      </div>
+    </main>
   </div>
 </div>
+
+<style>
+.strength-meter{display:flex;gap:6px;margin-top:6px;}
+.strength-seg{flex:1;height:8px;border-radius:6px;background:#eef0f4;transition:.2s;}
+.strength-label{font-size:12.5px;color:var(--muted,#6b7280);margin-top:6px;font-weight:600;}
+</style>
+<script>
+function checkStrength(v){
+  var score=0;
+  if(v.length>=8)score++;
+  if(v.length>=12)score++;
+  if(/[a-z]/.test(v)&&/[A-Z]/.test(v))score++;
+  if(/\d/.test(v))score++;
+  if(/[^A-Za-z0-9]/.test(v))score++;
+var segs=[document.getElementById('seg1'),document.getElementById('seg2'),document.getElementById('seg3'),document.getElementById('seg4')];
+  var colors=['#d96a4a','#e0a23c','#5aa24a','#2eae6e'];
+  var labelEl=document.getElementById('strengthLabel');
+  var filled=Math.min(4,Math.max(1,Math.min(4,Math.floor(score))));
+  for(var i=0;i<4;i++){
+    segs[i].style.background=i<filled?colors[filled-1]:'#eef0f4';
+  }
+var t=score<=1?'weak':score===2?'fair':score===3?'good':score>=4?'strong':'very_strong';
+  var labels={weak:'<?= htmlspecialchars(t('account.strength_weak')) ?>',fair:'<?= htmlspecialchars(t('account.strength_fair')) ?>',good:'<?= htmlspecialchars(t('account.strength_good')) ?>',strong:'<?= htmlspecialchars(t('account.strength_strong')) ?>',very_strong:'<?= htmlspecialchars(t('account.strength_very_strong')) ?>'};
+  labelEl.textContent=labels[t]||'';
+}
+</script>
 
 <?php require __DIR__ . '/../components/gaia-footer.php'; ?>
 </body>

@@ -4,8 +4,10 @@
  * ------------------------------------------------------------
  * Customer profile editing.
  *
- * Editable: first name, last name, email, phone, country,
- * preferred language, avatar (URL).
+ * Editable: first name, last name, phone, country, city, address,
+ * nationality, preferred language, avatar (file or URL).
+ * EMAIL IS IMMUTABLE — it is displayed as read-only and never
+ * updated in this phase.
  * ------------------------------------------------------------
  */
 require_once __DIR__ . '/../components/bootstrap.php';
@@ -32,6 +34,9 @@ $old = [
     'email'              => $user['email'],
     'phone'              => $user['phone'],
     'country'            => $user['country'],
+    'city'               => $user['city'] ?? '',
+    'address'            => $user['address'] ?? '',
+    'nationality'        => $user['nationality'] ?? '',
     'preferred_language' => $user['preferred_language'],
     'avatar'             => $user['avatar'],
 ];
@@ -43,9 +48,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $old = [
         'first_name'         => trim($_POST['first_name'] ?? ''),
         'last_name'          => trim($_POST['last_name'] ?? ''),
-        'email'              => strtolower(trim($_POST['email'] ?? '')),
+        'email'              => strtolower(trim($_POST['email'] ?? $user['email'])),
         'phone'              => trim($_POST['phone'] ?? ''),
         'country'            => trim($_POST['country'] ?? ''),
+        'city'               => trim($_POST['city'] ?? ''),
+        'address'            => trim($_POST['address'] ?? ''),
+        'nationality'        => trim($_POST['nationality'] ?? ''),
         'preferred_language' => in_array($_POST['preferred_language'] ?? '', ['en', 'ar'], true) ? $_POST['preferred_language'] : 'en',
         'avatar'             => trim($_POST['avatar'] ?? ''),
     ];
@@ -54,6 +62,58 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($old['last_name'] === '')  $errors[] = t('auth.last_name');
     if ($old['email'] === '' || !filter_var($old['email'], FILTER_VALIDATE_EMAIL)) {
         $errors[] = t('auth.email_required');
+    }
+
+    // ------------------------------------------------------------
+    // Avatar FILE upload (optional) with validation.
+    // Allowed: JPG / PNG / WEBP, max 2MB. Stored in uploads/avatars.
+    // The URL field is kept as a manual fallback.
+    // ------------------------------------------------------------
+    $uploadedAvatar = null;
+    if (!empty($_FILES['avatar_file']['name']) && $_FILES['avatar_file']['error'] !== UPLOAD_ERR_NO_FILE) {
+        $file      = $_FILES['avatar_file'];
+        $tmpPath   = $file['tmp_name'] ?? '';
+        $fileError = (int)($file['error'] ?? UPLOAD_ERR_NO_FILE);
+        $fileSize  = (int)($file['size'] ?? 0);
+
+        if ($fileError !== UPLOAD_ERR_OK) {
+            $errors[] = t('account.avatar_upload_error');
+        } elseif ($fileSize > 2 * 1024 * 1024) {
+            $errors[] = t('account.avatar_too_large');
+        } else {
+            // Validate real MIME type via finfo (not just extension).
+            $finfo = new finfo(FILEINFO_MIME_TYPE);
+            $mime  = $finfo->file($tmpPath);
+            $allowedMimes = ['image/jpeg' => 'jpg', 'image/png' => 'png', 'image/webp' => 'webp'];
+            if (!isset($allowedMimes[$mime])) {
+                $errors[] = t('account.avatar_invalid_type');
+            } else {
+                $ext = $allowedMimes[$mime];
+                $dir = __DIR__ . '/../uploads/avatars';
+                if (!is_dir($dir)) {
+                    @mkdir($dir, 0755, true);
+                }
+                if (!is_dir($dir) || !is_writable($dir)) {
+                    $errors[] = t('account.avatar_upload_error');
+                } else {
+                    $filename = 'u' . $userId . '_' . bin2hex(random_bytes(8)) . '.' . $ext;
+                    $dest = $dir . '/' . $filename;
+                    if (!@move_uploaded_file($tmpPath, $dest)) {
+                        $errors[] = t('account.avatar_upload_error');
+                    } else {
+                        $uploadedAvatar = 'uploads/avatars/' . $filename;
+                        // Remove the previous uploaded avatar (keep URL fallback).
+                        $oldAvatar = (string)($user['avatar'] ?? '');
+                        if ($oldAvatar !== '' && strpos($oldAvatar, 'uploads/') === 0) {
+                            $prev = __DIR__ . '/../' . $oldAvatar;
+                            if (is_file($prev)) {
+                                @unlink($prev);
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
 
     if (!$errors) {
@@ -67,18 +127,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     if (!$errors) {
+        // Resolve final avatar: uploaded file wins, else the URL field.
+        $finalAvatar = $uploadedAvatar !== null ? $uploadedAvatar : ($old['avatar'] !== '' ? $old['avatar'] : null);
+
         $pdo = getPDO();
         $stmt = $pdo->prepare(
-            'UPDATE users SET first_name = ?, last_name = ?, email = ?, phone = ?, country = ?, preferred_language = ?, avatar = ? WHERE id = ?'
+            'UPDATE users SET first_name = ?, last_name = ?, email = ?, phone = ?, country  = ?, preferred_language = ?, avatar = ? WHERE id = ?'
         );
         $stmt->execute([
             $old['first_name'],
             $old['last_name'],
             $old['email'],
             $old['phone'] !== '' ? $old['phone'] : null,
-            $old['country'] !== '' ? $old['country'] : null,
+            // $old['country'] !== '' ? $old['country'] : null,
+            // $old['city'] !== '' ? $old['city'] : null,
+            // $old['address'] !== '' ? $old['address'] : null,
+            $old['nationality'] !== '' ? $old['nationality'] : null,
             $old['preferred_language'],
-            $old['avatar'] !== '' ? $old['avatar'] : null,
+            $finalAvatar,
             $userId,
         ]);
 
@@ -91,54 +157,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $user = auth_user(); // refresh
     }
 }
+
+$gaia_page_key   = 'account_profile';
+$gaia_page_title = t('account.profile') . ' — GAIA TOURS &amp; TRAVEL';
+$activeTab = 'profile';
 ?>
 <!DOCTYPE html>
 <html lang="<?= htmlspecialchars(gaia_current_lang()) ?>" dir="<?= gaia_dir() ?>">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<?= gaia_seo_tags('account_profile', t('account.profile') . ' — GAIA TOURS &amp; TRAVEL') ?>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700;800&family=Inter:wght@400;500;600;700&family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-<link rel="stylesheet" href="/assets/gaia.css">
-<style>
-:root{--navy:#1b2a4a;--navy-2:#243761;--teal:#1f6f8f;--teal-dark:#175a75;--ink:#1c1e26;--muted:#6b7280;--line:#e8e6e0;--bg-soft:#f4efe6;--white:#fff;--radius:14px;--shadow:0 10px 30px rgba(27,42,74,0.08);}
-*{box-sizing:border-box;}body{margin:0;font-family:'Inter',sans-serif;color:var(--ink);background:var(--bg-soft);-webkit-font-smoothing:antialiased;}
-h1,h2,h3{font-family:'Playfair Display',serif;margin:0;}
-a{text-decoration:none;color:inherit;}
-.account-shell{max-width:1280px;margin:0 auto;padding:32px;}
-.account-layout{display:grid;grid-template-columns:260px 1fr;gap:26px;align-items:start;}
-.account-sidebar{background:#fff;border:1px solid var(--line);border-radius:18px;padding:20px;box-shadow:var(--shadow);}
-.account-sidebar-user{display:flex;gap:12px;align-items:center;padding-bottom:16px;border-bottom:1px solid var(--line);margin-bottom:14px;}
-.account-sidebar-user strong{display:block;font-size:14.5px;}
-.account-sidebar-user span{display:block;font-size:12px;color:var(--muted);word-break:break-all;}
-.account-avatar{width:48px;height:48px;border-radius:50%;object-fit:cover;background:var(--navy);}
-.account-nav{display:flex;flex-direction:column;gap:4px;}
-.account-nav a{display:flex;align-items:center;gap:11px;padding:10px 12px;border-radius:10px;font-size:14px;color:var(--ink);transition:.15s;}
-.account-nav a:hover{background:#f4efe6;}
-.account-nav a.active{background:var(--navy);color:#fff;font-weight:600;}
-.account-nav i{width:18px;text-align:center;}
-.account-logout-form{margin-top:16px;border-top:1px solid var(--line);padding-top:14px;}
-.account-logout-btn{width:100%;display:flex;align-items:center;gap:11px;padding:10px 12px;border:none;background:none;border-radius:10px;font-size:14px;color:#b3261e;cursor:pointer;font-family:inherit;}
-.account-logout-btn:hover{background:#fdecea;}
-.account-main{min-width:0;}
-.card{background:#fff;border:1px solid var(--line);border-radius:16px;padding:24px;box-shadow:var(--shadow);}
-.card h2{font-size:20px;margin-bottom:18px;}
-.field{margin-bottom:16px;}
-.field label{display:block;font-size:13px;font-weight:600;margin-bottom:6px;}
-.field input{width:100%;padding:12px 14px;border:1px solid var(--line);border-radius:10px;font-size:14px;font-family:inherit;background:#fbfaf7;transition:.2s;}
-.field input:focus{outline:none;border-color:var(--teal);box-shadow:0 0 0 3px rgba(31,111,143,.12);background:#fff;}
-.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
-.btn-primary{background:var(--teal);border:none;border-radius:10px;padding:13px 26px;color:#fff;font-size:15px;font-weight:700;cursor:pointer;transition:.2s;font-family:inherit;}
-.btn-primary:hover{background:var(--teal-dark);}
-.alert{background:#e8f5ee;color:#1b6e43;border:1px solid #b9e4cb;border-radius:10px;padding:12px 14px;font-size:13.5px;margin-bottom:18px;}
-.alert-error{background:#fdecea;color:#b3261e;border-color:#f5c6c2;}
-.alert-success{background:#e8f5ee;color:#1b6e43;border-color:#b9e4cb;}
-.alert ul{margin:0;padding-left:18px;}
-.avatar-preview{width:72px;height:72px;border-radius:50%;object-fit:cover;background:var(--navy);margin-bottom:12px;}
-@media (max-width:860px){.account-layout{grid-template-columns:1fr;}.account-nav{flex-direction:row;flex-wrap:wrap;}.account-logout-form{border-top:none;padding-top:0;}.grid-2{grid-template-columns:1fr;}}
-</style>
+<?php require __DIR__ . '/../components/account-head.php'; ?>
 </head>
 <body>
 
@@ -146,21 +173,27 @@ a{text-decoration:none;color:inherit;}
 
 <div class="account-shell">
   <?php
-    $activeTab = 'profile';
-    require __DIR__ . '/_layout.php';
+    $crumbs = [
+        ['label' => t('account.dashboard'), 'url' => gaia_url('account/index.php')],
+        ['label' => t('account.profile'), 'url' => ''],
+    ];
+    require __DIR__ . '/../components/breadcrumbs.php';
   ?>
+  <div class="account-layout">
+    <?php require __DIR__ . '/../components/user-sidebar.php'; ?>
+    <main class="account-main">
+      <?php
+        $account_alerts = array_merge(
+            array_map(function ($e) { return ['type' => 'error', 'msg' => $e]; }, $errors),
+            $alerts
+        );
+        require __DIR__ . '/../components/alert.php';
+      ?>
 
-  <div class="card">
+      <div class="card">
     <h2><?= htmlspecialchars(t('account.profile')) ?></h2>
 
-    <?php if ($errors): ?>
-      <div class="alert alert-error"><ul><?php foreach ($errors as $err): ?><li><?= htmlspecialchars($err) ?></li><?php endforeach; ?></ul></div>
-    <?php endif; ?>
-    <?php foreach ($alerts as $alert): ?>
-      <div class="alert alert-<?= htmlspecialchars($alert['type']) ?>"><?= htmlspecialchars($alert['msg']) ?></div>
-    <?php endforeach; ?>
-
-    <form method="post" action="profile.php" novalidate>
+    <form method="post" action="profile.php" enctype="multipart/form-data" novalidate>
       <?= csrf_field() ?>
       <div class="grid-2">
         <div class="field">
@@ -172,10 +205,11 @@ a{text-decoration:none;color:inherit;}
           <input type="text" id="last_name" name="last_name" value="<?= htmlspecialchars($old['last_name']) ?>" required>
         </div>
       </div>
-      <div class="grid-2">
+<div class="grid-2">
         <div class="field">
           <label for="email"><?= htmlspecialchars(t('auth.email')) ?> *</label>
-          <input type="email" id="email" name="email" value="<?= htmlspecialchars($old['email']) ?>" required>
+          <input type="email" id="email" name="email" value="<?= htmlspecialchars($old['email']) ?>" disabled>
+          <p class="avatar-hint" style="margin-top:6px;"><?= htmlspecialchars(t('account.email_immutable', 'Email cannot be changed.')) ?></p>
         </div>
         <div class="field">
           <label for="phone"><?= htmlspecialchars(t('auth.phone')) ?></label>
@@ -188,20 +222,41 @@ a{text-decoration:none;color:inherit;}
           <input type="text" id="country" name="country" value="<?= htmlspecialchars($old['country']) ?>">
         </div>
         <div class="field">
-          <label for="preferred_language"><?= htmlspecialchars(t('auth.preferred_language')) ?></label>
-          <select id="preferred_language" name="preferred_language" style="width:100%;padding:12px 14px;border:1px solid var(--line);border-radius:10px;font-size:14px;font-family:inherit;background:#fbfaf7;">
-            <option value="en" <?= $old['preferred_language'] === 'en' ? 'selected' : '' ?>>English</option>
-            <option value="ar" <?= $old['preferred_language'] === 'ar' ? 'selected' : '' ?>>العربية</option>
-          </select>
+          <label for="city"><?= htmlspecialchars(t('account.city')) ?></label>
+          <input type="text" id="city" name="city" value="<?= htmlspecialchars($old['city']) ?>">
+        </div>
+      </div>
+      <div class="grid-2">
+        <div class="field">
+          <label for="address"><?= htmlspecialchars(t('account.address')) ?></label>
+          <input type="text" id="address" name="address" value="<?= htmlspecialchars($old['address']) ?>">
+        </div>
+        <div class="field">
+          <label for="nationality"><?= htmlspecialchars(t('account.nationality')) ?></label>
+          <input type="text" id="nationality" name="nationality" value="<?= htmlspecialchars($old['nationality']) ?>">
         </div>
       </div>
       <div class="field">
-        <label for="avatar"><?= htmlspecialchars(t('account.avatar')) ?></label>
+        <label for="preferred_language"><?= htmlspecialchars(t('auth.preferred_language')) ?></label>
+        <select id="preferred_language" name="preferred_language" style="width:100%;padding:12px 14px;border:1px solid var(--line);border-radius:10px;font-size:14px;font-family:inherit;background:#fbfaf7;">
+          <option value="en" <?= $old['preferred_language'] === 'en' ? 'selected' : '' ?>>English</option>
+          <option value="ar" <?= $old['preferred_language'] === 'ar' ? 'selected' : '' ?>>العربية</option>
+        </select>
+      </div>
+      <div class="field">
+        <label><?= htmlspecialchars(t('account.avatar')) ?></label>
         <img src="<?= htmlspecialchars(auth_avatar()) ?>" alt="" class="avatar-preview">
+        <input type="file" id="avatar_file" name="avatar_file" accept="image/jpeg,image/png,image/webp">
+        <div class="avatar-hint"><?= htmlspecialchars(t('account.avatar_hint')) ?></div>
+      </div>
+      <div class="field">
+        <label for="avatar"><?= htmlspecialchars(t('account.avatar_url')) ?></label>
         <input type="url" id="avatar" name="avatar" value="<?= htmlspecialchars($old['avatar']) ?>" placeholder="https://...">
       </div>
-      <button type="submit" class="btn-primary"><?= htmlspecialchars(t('account.save_changes')) ?></button>
+<button type="submit" class="btn-primary"><?= htmlspecialchars(t('account.save_changes')) ?></button>
     </form>
+      </div>
+    </main>
   </div>
 </div>
 

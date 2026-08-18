@@ -41,12 +41,8 @@ if (!$summary) {
 $bookingStatusLabel = function_exists('booking_status_label')
     ? booking_status_label((string)($summary['status'] ?? 'pending'))
     : ($summary['status'] ?? 'pending');
-$paymentStatusLabel = function_exists('payment_status_label')
-    ? payment_status_label
-    : function ($s) { return $s; };
-$invoiceStatusLabel = function_exists('invoice_status_label')
-    ? invoice_status_label
-    : function ($s) { return $s; };
+$paymentStatusLabel = null;
+$invoiceStatusLabel =null;
 
 $currency = $summary['currency'] ?? 'USD';
 $amount   = (float)($summary['amount'] ?? 0);
@@ -87,7 +83,6 @@ $amount   = (float)($summary['amount'] ?? 0);
           </span>
           <span class="value">
             <span class="badge badge-<?= htmlspecialchars((string)($p['status'] ?? 'pending')) ?>">
-              <?= htmlspecialchars($paymentStatusLabel((string)($p['status'] ?? 'pending'))) ?>
             </span>
           </span>
         </div>

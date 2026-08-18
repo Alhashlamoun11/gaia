@@ -204,9 +204,18 @@ if (preg_match('#^/(en|ar)/account/(dashboard|bookings|payments|invoices|profile
     if ($p === '/reviews' || $p === '/hotels') {
         return ['index.php', $query];
     }
-    // Anchor section that lives on the GAIA Night page
+// Anchor section that lives on the GAIA Night page
     if ($p === '/events') {
         return ['gaia-night.php', $query];
+    }
+
+    // Authoritative fallback mirroring .htaccess's generic rule:
+    // /en/<script>.php -> <script>.php?lang=en
+    // This makes /en/login.php, /en/register.php, /en/account/index.php etc.
+    // work under the PHP built-in server (no physical en/ directory).
+    if (preg_match('#^/(en|ar)/([A-Za-z0-9_\-/]+\.php)$#', $p, $m)) {
+        $query['lang'] = $m[1];
+        return [$m[2], $query];
     }
 
     return false;

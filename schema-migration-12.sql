@@ -224,6 +224,8 @@ INSERT IGNORE INTO translations (`key`, lang, `value`, `group`) VALUES
 ('account.profile',               'ar', 'الملف الشخصي', 'account'),
 ('account.avatar',                'en', 'Avatar', 'account'),
 ('account.avatar',                'ar', 'الصورة الرمزية', 'account'),
+('account.avatar_url',            'en', 'Or use an image URL', 'account'),
+('account.avatar_url',            'ar', 'أو استخدم رابط صورة', 'account'),
 ('account.save_changes',          'en', 'Save Changes', 'account'),
 ('account.save_changes',          'ar', 'حفظ التغييرات', 'account'),
 ('account.profile_updated',       'en', 'Profile updated successfully.', 'account'),
@@ -361,4 +363,24 @@ INSERT IGNORE INTO translations (`key`, lang, `value`, `group`) VALUES
 ('account.total_price',           'en', 'Total Price', 'account'),
 ('account.total_price',           'ar', 'السعر الإجمالي', 'account'),
 ('account.invoice_total',         'en', 'Invoice Total', 'account'),
-('account.invoice_total',         'ar', 'إجمالي الفاتورة', 'account');
+('account.invoice_total',         'ar', 'إجمالي الفاتورة', 'account'),
+
+-- ============================================================
+-- PAYMENTS SUMMARY / INVOICE PRINT (referenced by views)
+-- ============================================================
+('account.total_payments',        'en', 'Total Payments', 'account'),
+('account.total_payments',        'ar', 'إجمالي المدفوعات', 'account'),
+('account.billed_to',             'en', 'Billed To', 'account'),
+('account.billed_to',             'ar', 'فاتورة إلى', 'account'),
+('account.invoice_from',          'en', 'Invoice From', 'account'),
+('account.invoice_from',          'ar', 'الفاتورة من', 'account'),
+('account.description',           'en', 'Description', 'account'),
+('account.description',           'ar', 'الوصف', 'account'),
+('account.invoice_line',          'en', '{type} booking {ref}', 'account'),
+('account.invoice_line',          'ar', 'حجز {type} {ref}', 'account'),
+('account.tax',                   'en', 'Tax', 'account'),
+('account.tax',                   'ar', 'الضريبة', 'account'),
+('account.discount',              'en', 'Discount', 'account'),
+('account.discount',              'ar', 'الخصم', 'account'),
+('account.invoice_footer',        'en', 'Thank you for choosing GAIA TOURS & TRAVEL. This is a system-generated invoice.', 'account'),
+('account.invoice_footer',        'ar', 'شكراً لاختيارك GAIA للسياحة والسفر. هذه فاتورة صادرة تلقائياً من النظام.', 'account');

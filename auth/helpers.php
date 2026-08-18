@@ -68,7 +68,13 @@ if (!function_exists('auth_avatar')) {
     {
         $u = Auth::user();
         if ($u && !empty($u['avatar'])) {
-            return $u['avatar'];
+            $avatar = $u['avatar'];
+            // Normalise a relative uploads/ path to be site-root-absolute so it
+            // resolves correctly regardless of the current page directory.
+            if (strpos($avatar, 'uploads/') === 0) {
+                $avatar = '/' . $avatar;
+            }
+            return $avatar;
         }
         // Generated letter avatar via initials
         if ($u) {

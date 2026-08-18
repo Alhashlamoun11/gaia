@@ -18,8 +18,13 @@ $files = [
 __DIR__ . '/schema-migration-8.sql',
     __DIR__ . '/schema-migration-9.sql',
 __DIR__ . '/schema-migration-auth.sql',
-    __DIR__ . '/schema-migration-10.sql',
+__DIR__ . '/schema-migration-10.sql',
     __DIR__ . '/schema-migration-11.sql',
+    __DIR__ . '/schema-migration-12.sql',
+    __DIR__ . '/schema-migration-13.sql',
+    __DIR__ . '/schema-migration-14.sql',
+    __DIR__ . '/schema-migration-15.sql',
+    __DIR__ . '/schema-migration-16.sql',
 ];
 
 // Only run the newest one (this runner is for incremental changes).

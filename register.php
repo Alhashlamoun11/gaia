@@ -24,7 +24,7 @@ $gaia_header_style = 'solid';
 
 Auth::startSession();
 if (Auth::check()) {
-    header('Location: account/index.php');
+    header('Location: ' . (function_exists('gaia_url') ? gaia_url('account/index.php') : 'account/index.php'));
     exit;
 }
 
@@ -82,7 +82,7 @@ if (!$ok) {
 
             // Auto-login
             Auth::login($old['email'], $password, false);
-            header('Location: account/index.php');
+            header('Location: ' . (function_exists('gaia_url') ? gaia_url('account/index.php') : 'account/index.php'));
             exit;
         }
     }
