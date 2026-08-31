@@ -101,11 +101,6 @@ $admin_active         = 'dashboard';
           require __DIR__ . '/components/stats-card.php';
           $stat_value = $toursCount; $stat_label = t('admin.tours'); $stat_icon = 'fa-mountain-sun'; $stat_color = 'green'; $stat_link = admin_url('tours/index.php');
           require __DIR__ . '/components/stats-card.php';
-        ?>
-      </div>
-
-      <div class="stats-grid">
-        <?php
           $stat_value = $hotelsCount; $stat_label = t('admin.hotels'); $stat_icon = 'fa-hotel'; $stat_color = 'blue'; $stat_link = admin_url('hotels/index.php');
           require __DIR__ . '/components/stats-card.php';
           $stat_value = $roomsCount; $stat_label = t('admin.rooms'); $stat_icon = 'fa-bed'; $stat_color = 'green'; $stat_link = admin_url('rooms/index.php');
@@ -114,19 +109,32 @@ $admin_active         = 'dashboard';
           require __DIR__ . '/components/stats-card.php';
           $stat_value = $eventsCount; $stat_label = t('admin.events'); $stat_icon = 'fa-wand-magic-sparkles'; $stat_color = 'gold'; $stat_link = admin_url('events/index.php');
           require __DIR__ . '/components/stats-card.php';
-        ?>
-      </div>
-
-      <div class="stats-grid">
-        <?php
           $stat_value = $pendingPayments; $stat_label = t('admin.pending_payments'); $stat_icon = 'fa-clock'; $stat_color = 'red'; $stat_link = admin_url('bookings/index.php');
           require __DIR__ . '/components/stats-card.php';
           $stat_value = $completedPayments; $stat_label = t('admin.completed_payments', 'Completed Payments'); $stat_icon = 'fa-circle-check'; $stat_color = 'green';
           require __DIR__ . '/components/stats-card.php';
         ?>
+
+<!-- Analytics Section -->
+<section class="analytics-section">
+  <div class="analytics-card" id="hotels-card" data-card-id="hotels-card" data-show-export="true">
+    <h3 class="analytics-card-title">Hotels Overview</h3>
+  </div>
+  <div class="analytics-card" id="payments-card" data-card-id="payments-card" data-show-export="true">
+    <h3 class="analytics-card-title">Payments Overview</h3>
+  </div>
+  <div class="analytics-card" id="reservations-card" data-card-id="reservations-card" data-show-export="true">
+    <h3 class="analytics-card-title">Reservations Overview</h3>
+  </div>
+  <div class="analytics-card" id="users-card" data-show-export="true">
+    <h3 class="analytics-card-title">New Users</h3>
+  </div>
+</section>
+
+
       </div>
 
-      <div class="stats-grid" style="grid-template-columns:repeat(2,1fr);">
+      <div class="grid-2">
         <div class="card" style="margin-bottom:0;">
           <h3><i class="fa-solid fa-bolt"></i> <?= htmlspecialchars(t('admin.latest_bookings')) ?></h3>
           <div class="table-wrap" style="box-shadow:none;border:none;">
@@ -170,7 +178,7 @@ $admin_active         = 'dashboard';
         </div>
       </div>
 
-      <div class="stats-grid" style="grid-template-columns:repeat(3,1fr);margin-top:22px;">
+      <div class="grid-3" style="margin-top:22px;">
         <div class="card" style="margin-bottom:0;">
           <h3><i class="fa-solid fa-star"></i> <?= htmlspecialchars(t('admin.latest_reviews')) ?></h3>
           <div class="table-wrap" style="box-shadow:none;border:none;">

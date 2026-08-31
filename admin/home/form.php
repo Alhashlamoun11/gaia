@@ -33,7 +33,7 @@ $errors = []; $alerts = [];
 
 // Default empty rows per tab
 $defs = [
-    'banners'=>['page'=>'home','title'=>'','subtitle'=>'','cta_text'=>'','cta_url'=>'','image_url'=>'','stats_json'=>'','sort_order'=>0,'is_active'=>1],
+    'banners'=>['page'=>'home','title'=>'','subtitle'=>'','cta_label'=>'','cta_url'=>'','image_url'=>'','stats_json'=>'','sort_order'=>0,'is_active'=>1],
     'highlights'=>['section'=>'expect','title'=>'','description'=>'','icon'=>'','image_url'=>'','sort_order'=>0,'is_active'=>1],
     'trust_scores'=>['icon'=>'','score'=>'','label'=>'','color'=>'#1f6f8f','sort_order'=>0,'is_active'=>1],
     'awards'=>['title'=>'','icon'=>'','sort_order'=>0,'is_active'=>1],
@@ -51,7 +51,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 'page'=>trim($_POST['page']??'home'),
                 'title'=>trim($_POST['title']??''),
                 'subtitle'=>trim($_POST['subtitle']??''),
-                'cta_text'=>trim($_POST['cta_text']??''),
+                'cta_label'=>trim($_POST['cta_label']??''),
                 'cta_url'=>trim($_POST['cta_url']??''),
                 'stats_json'=>trim($_POST['stats_json']??''),
                 'sort_order'=>(int)($_POST['sort_order']??0),
@@ -171,7 +171,7 @@ $C = fn($v)=>htmlspecialchars((string)($v ?? ''));
             </div>
             <div class="field"><label><?= $C(t('admin.subtitle','Subtitle')) ?></label><input type="text" name="subtitle" value="<?= $C($old['subtitle']) ?>"></div>
             <div class="grid-2">
-              <div class="field"><label><?= $C(t('admin.cta_text','CTA Text')) ?></label><input type="text" name="cta_text" value="<?= $C($old['cta_text']) ?>"></div>
+              <div class="field"><label><?= $C(t('admin.cta_text','CTA Text')) ?></label><input type="text" name="cta_label" value="<?= $C($old['cta_label']) ?>"></div>
               <div class="field"><label><?= $C(t('admin.cta_url','CTA URL')) ?></label><input type="text" name="cta_url" value="<?= $C($old['cta_url']) ?>"></div>
             </div>
             <div class="field"><label><?= $C(t('admin.stats_json')) ?></label><textarea name="stats_json" rows="4" placeholder='[{"icon":"fa-solid fa-car-side","value":"1 400 000+","label":"Completed rides"}]'><?= $C($old['stats_json']) ?></textarea></div>

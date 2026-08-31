@@ -76,9 +76,9 @@ $admin_active = 'partners';
           <table>
             <thead><tr>
               <th><?= htmlspecialchars(t('admin.logo','Logo')) ?></th>
-              <th><?= htmlspecialchars(AdminQuery::sortLink('name', t('admin.name'), ['id','name','sort_order'], 'sort_order')) ?></th>
+              <th><?= AdminQuery::sortLink('name', t('admin.name'), ['id','name','sort_order'], 'sort_order') ?></th>
               <th><?= htmlspecialchars(t('admin.website')) ?></th>
-              <th><?= htmlspecialchars(AdminQuery::sortLink('sort_order', t('admin.sort_order'), ['id','name','sort_order'], 'sort_order')) ?></th>
+              <th><?= AdminQuery::sortLink('sort_order', t('admin.sort_order'), ['id','name','sort_order'], 'sort_order') ?></th>
               <th><?= htmlspecialchars(t('admin.status')) ?></th>
               <th><?= htmlspecialchars(t('admin.actions')) ?></th>
             </tr></thead>

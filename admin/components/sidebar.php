@@ -54,6 +54,9 @@ function _admin_nav_item($key, $icon, $label, $url, $active)
       echo _admin_nav_item('reviews', 'fa-star', t('admin.reviews'), admin_url('reviews/index.php'), $admin_active);
       echo _admin_nav_item('faq', 'fa-circle-question', t('admin.faq'), admin_url('faq/index.php'), $admin_active);
       echo _admin_nav_item('partners', 'fa-handshake', t('admin.partners'), admin_url('partners/index.php'), $admin_active);
+      if ($adminMe['role_slug'] === 'super_admin') {
+          echo _admin_nav_item('applications', 'fa-file-signature', t('admin.partners.applications', 'Partner Apps'), admin_url('partners/applications.php'), $admin_active);
+      }
       echo _admin_nav_item('services', 'fa-briefcase', t('admin.services'), admin_url('services/index.php'), $admin_active);
       echo _admin_nav_item('media', 'fa-images', t('admin.media'), admin_url('media/index.php'), $admin_active);
     ?>

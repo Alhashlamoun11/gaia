@@ -429,4 +429,77 @@ class Auth
         $pdo->prepare('UPDATE password_resets SET used = 1 WHERE token_hash = ?')
             ->execute([hash('sha256', $token)]);
     }
+    public static function logAudit(string $action, ?int $applicationId = null)
+    {
+        self::startSession();
+        $pdo = getPDO();
+        $userId = $_SESSION['auth_user_id'] ?? null;
+        $stmt = $pdo->prepare("INSERT INTO audit_logs (user_id, application_id, action) VALUES (?, ?, ?)");
+        $stmt->execute([$userId, $applicationId, $action]);
+    }
+
+    /**
+     * Issue a 6-digit OTP code for password reset and store alongside the token.
+     * Returns ['token' => string, 'otp' => string] or null if email not found.
+     */
+    public static function issueOtpCode(string $email): ?array
+    {
+        $pdo   = getPDO();
+        $email = strtolower(trim($email));
+        $stmt  = $pdo->prepare('SELECT id, first_name, last_name FROM users WHERE email = ? AND status = "active" LIMIT 1');
+        $stmt->execute([$email]);
+        $user = $stmt->fetch();
+        if (!$user) {
+            return null; // don't reveal whether email exists
+        }
+
+        // Invalidate any previous unused tokens for this user
+        $pdo->prepare('UPDATE password_resets SET used = 1 WHERE user_id = ? AND used = 0')
+            ->execute([(int)$user['id']]);
+
+        $otp    = str_pad((string)random_int(0, 999999), 6, '0', STR_PAD_LEFT);
+        $token  = bin2hex(random_bytes(32));
+        $expiry = date('Y-m-d H:i:s', time() + 600); // 10 minutes
+
+        $pdo->prepare('INSERT INTO password_resets (user_id, token_hash, otp_code, expires_at) VALUES (?, ?, ?, ?)')
+            ->execute([(int)$user['id'], hash('sha256', $token), $otp, $expiry]);
+
+        return [
+            'token'      => $token,
+            'otp'        => $otp,
+            'first_name' => $user['first_name'],
+        ];
+    }
+
+    /**
+     * Validate a 6-digit OTP code. Returns the raw token on success, null on failure.
+     * Token is used in step 3 to call validateResetToken() / resetPassword().
+     */
+    public static function validateOtpCode(string $email, string $otp): ?string
+    {
+        $pdo   = getPDO();
+        $email = strtolower(trim($email));
+
+        $stmt = $pdo->prepare(
+            'SELECT pr.token_hash, pr.otp_code, pr.expires_at, pr.used
+             FROM password_resets pr
+             JOIN users u ON u.id = pr.user_id
+             WHERE u.email = ?
+               AND pr.used = 0
+             ORDER BY pr.id DESC LIMIT 1'
+        );
+        $stmt->execute([$email]);
+        $row = $stmt->fetch();
+
+        if (!$row) return null;
+        if ((int)$row['used'] === 1) return null;
+        if (strtotime($row['expires_at']) < time()) return null;
+        // Constant-time comparison
+        if (!hash_equals($row['otp_code'], $otp)) return null;
+
+        // OTP is valid — return a temporary lookup key (not the real token yet)
+        // The real token_hash is stored, we return a dummy session marker.
+        // We store the token_hash in session to bind step 3 to this OTP.
+        return $row['token_hash']; // sha256 hash — used as session identifier
+    }
 }

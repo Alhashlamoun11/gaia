@@ -21,12 +21,11 @@ if (!$hotel) {
 }
 
 $tab = $_GET['tab'] ?? 'facilities';
-$tabs = ['facilities','offers','amenities'];
+$tabs = ['facilities','offers'];
 if (!in_array($tab, $tabs, true)) $tab = 'facilities';
 $tableMap = [
     'facilities'=>'hotel_facilities',
     'offers'=>'hotel_offers',
-    'amenities'=>'hotel_amenities',
 ];
 $table = $tableMap[$tab];
 
@@ -43,21 +42,24 @@ if ($editing && !$row) {
 
 $errors = []; $alerts = [];
 $defs = [
-    'facilities'=>['facility'=>'','facility_ar'=>'','icon'=>'fa-solid fa-check','sort_order'=>0,'is_active'=>1],
+    'facilities'=>['name'=>'','name_ar'=>'','icon'=>'fa-solid fa-check','sort_order'=>0],
     'offers'=>['title'=>'','title_ar'=>'','description'=>'','description_ar'=>'','price'=>0,'image_url'=>'','sort_order'=>0,'is_active'=>1],
-    'amenities'=>['amenity'=>'','amenity_ar'=>'','icon'=>'fa-solid fa-check','sort_order'=>0,'is_active'=>1],
+    'amenities'=>['name'=>'','name_ar'=>'','icon'=>'fa-solid fa-check','sort_order'=>0],
 ];
 $old = $row ?: $defs[$tab];
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!csrf_verify()) csrf_fail();
-    $data = ['hotel_id' => $hotelId, 'sort_order' => (int)($_POST['sort_order'] ?? 0), 'is_active' => !empty($_POST['is_active']) ? 1 : 0];
+    $data = ['hotel_id' => $hotelId, 'sort_order' => (int)($_POST['sort_order'] ?? 0)];
+    if ($tab === 'offers') {
+        $data['is_active'] = !empty($_POST['is_active']) ? 1 : 0;
+    }
     switch ($tab) {
         case 'facilities':
-            $data['facility'] = trim($_POST['facility'] ?? '');
-            $data['facility_ar'] = trim($_POST['facility_ar'] ?? '');
+            $data['name'] = trim($_POST['facility'] ?? '');
+            $data['name_ar'] = trim($_POST['facility_ar'] ?? '');
             $data['icon'] = trim($_POST['icon'] ?? 'fa-solid fa-check');
-            if ($data['facility'] === '') $errors[] = t('admin.name_req','Name is required.');
+            if ($data['name'] === '') $errors[] = t('admin.name_req','Name is required.');
             break;
         case 'offers':
             $data['title'] = trim($_POST['title'] ?? '');
@@ -75,10 +77,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
             break;
         case 'amenities':
-            $data['amenity'] = trim($_POST['amenity'] ?? '');
-            $data['amenity_ar'] = trim($_POST['amenity_ar'] ?? '');
+            $data['name'] = trim($_POST['amenity'] ?? '');
+            $data['name_ar'] = trim($_POST['amenity_ar'] ?? '');
             $data['icon'] = trim($_POST['icon'] ?? 'fa-solid fa-check');
-            if ($data['amenity'] === '') $errors[] = t('admin.name_req','Name is required.');
+            if ($data['name'] === '') $errors[] = t('admin.name_req','Name is required.');
             break;
     }
     if (!$errors) {
@@ -117,25 +119,25 @@ $C = fn($v)=>htmlspecialchars((string)($v ?? ''));
 
           <?php if ($tab === 'facilities'): ?>
             <div class="grid-2">
-              <div class="field"><label><?= $C(t('admin.facility','Facility')) ?> (EN) *</label><input type="text" name="facility" value="<?= $C($old['facility']) ?>" required></div>
-              <div class="field"><label><?= $C(t('admin.facility','Facility')) ?> (AR)</label><input type="text" name="facility_ar" value="<?= $C($old['facility_ar']) ?>"></div>
+              <div class="field"><label><?= $C(t('admin.facility','Facility')) ?> (EN) *</label><input type="text" name="facility" value="<?= $C($old['name'] ?? '') ?>" required></div>
+              <div class="field"><label><?= $C(t('admin.facility','Facility')) ?> (AR)</label><input type="text" name="facility_ar" value="<?= $C($old['name_ar'] ?? '') ?>"></div>
             </div>
             <div class="grid-2">
-              <div class="field"><label><?= $C(t('admin.icon')) ?></label><input type="text" name="icon" value="<?= $C($old['icon']) ?>" placeholder="fa-solid fa-wifi"></div>
-              <div class="field"><label><?= $C(t('admin.sort_order')) ?></label><input type="number" name="sort_order" value="<?= (int)$old['sort_order'] ?>"></div>
+              <div class="field"><label><?= $C(t('admin.icon')) ?></label><input type="text" name="icon" value="<?= $C($old['icon'] ?? '') ?>" placeholder="fa-solid fa-wifi"></div>
+              <div class="field"><label><?= $C(t('admin.sort_order')) ?></label><input type="number" name="sort_order" value="<?= (int)($old['sort_order'] ?? 0) ?>"></div>
             </div>
           <?php elseif ($tab === 'offers'): ?>
             <div class="grid-2">
-              <div class="field"><label><?= $C(t('admin.title')) ?> (EN) *</label><input type="text" name="title" value="<?= $C($old['title']) ?>" required></div>
-              <div class="field"><label><?= $C(t('admin.title')) ?> (AR)</label><input type="text" name="title_ar" value="<?= $C($old['title_ar']) ?>"></div>
+              <div class="field"><label><?= $C(t('admin.title')) ?> (EN) *</label><input type="text" name="title" value="<?= $C($old['title'] ?? '') ?>" required></div>
+              <div class="field"><label><?= $C(t('admin.title')) ?> (AR)</label><input type="text" name="title_ar" value="<?= $C($old['title_ar'] ?? '') ?>"></div>
             </div>
             <div class="grid-2">
-              <div class="field"><label><?= $C(t('admin.description')) ?> (EN)</label><textarea name="description" rows="3"><?= $C($old['description']) ?></textarea></div>
-              <div class="field"><label><?= $C(t('admin.description')) ?> (AR)</label><textarea name="description_ar" rows="3"><?= $C($old['description_ar']) ?></textarea></div>
+              <div class="field"><label><?= $C(t('admin.description')) ?> (EN)</label><textarea name="description" rows="3"><?= $C($old['description'] ?? '') ?></textarea></div>
+              <div class="field"><label><?= $C(t('admin.description')) ?> (AR)</label><textarea name="description_ar" rows="3"><?= $C($old['description_ar'] ?? '') ?></textarea></div>
             </div>
             <div class="grid-3">
-              <div class="field"><label><?= $C(t('admin.price')) ?></label><input type="number" step="0.01" name="price" value="<?= $C($old['price']) ?>"></div>
-              <div class="field"><label><?= $C(t('admin.sort_order')) ?></label><input type="number" name="sort_order" value="<?= (int)$old['sort_order'] ?>"></div>
+              <div class="field"><label><?= $C(t('admin.price')) ?></label><input type="number" step="0.01" name="price" value="<?= $C($old['price'] ?? 0) ?>"></div>
+              <div class="field"><label><?= $C(t('admin.sort_order')) ?></label><input type="number" name="sort_order" value="<?= (int)($old['sort_order'] ?? 0) ?>"></div>
               <div class="field">
                 <label><?= $C(t('admin.image')) ?></label>
                 <?php if (!empty($old['image_url'])): ?><img class="preview-img" src="<?= $C($old['image_url']) ?>" alt=""><br><?php endif; ?>
@@ -145,20 +147,24 @@ $C = fn($v)=>htmlspecialchars((string)($v ?? ''));
             </div>
           <?php elseif ($tab === 'amenities'): ?>
             <div class="grid-2">
-              <div class="field"><label><?= $C(t('admin.amenity','Amenity')) ?> (EN) *</label><input type="text" name="amenity" value="<?= $C($old['amenity']) ?>" required></div>
-              <div class="field"><label><?= $C(t('admin.amenity','Amenity')) ?> (AR)</label><input type="text" name="amenity_ar" value="<?= $C($old['amenity_ar']) ?>"></div>
+              <div class="field"><label><?= $C(t('admin.amenity','Amenity')) ?> (EN) *</label><input type="text" name="amenity" value="<?= $C($old['name'] ?? '') ?>" required></div>
+              <div class="field"><label><?= $C(t('admin.amenity','Amenity')) ?> (AR)</label><input type="text" name="amenity_ar" value="<?= $C($old['name_ar'] ?? '') ?>"></div>
             </div>
             <div class="grid-2">
-              <div class="field"><label><?= $C(t('admin.icon')) ?></label><input type="text" name="icon" value="<?= $C($old['icon']) ?>" placeholder="fa-solid fa-wifi"></div>
-              <div class="field"><label><?= $C(t('admin.sort_order')) ?></label><input type="number" name="sort_order" value="<?= (int)$old['sort_order'] ?>"></div>
+              <div class="field"><label><?= $C(t('admin.icon')) ?></label><input type="text" name="icon" value="<?= $C($old['icon'] ?? '') ?>" placeholder="fa-solid fa-wifi"></div>
+              <div class="field"><label><?= $C(t('admin.sort_order')) ?></label><input type="number" name="sort_order" value="<?= (int)($old['sort_order'] ?? 0) ?>"></div>
             </div>
           <?php endif; ?>
 
-          <div class="field"><label><?= $C(t('admin.status')) ?></label><input type="checkbox" name="is_active" value="1" <?= (int)$old['is_active']?'checked':'' ?>> <?= $C(t('admin.active')) ?></div>
+          <?php if ($tab === 'offers'): ?>
+            <div class="field"><label><?= $C(t('admin.status')) ?></label><input type="checkbox" name="is_active" value="1" <?= (int)($old['is_active'] ?? 1)?'checked':'' ?>> <?= $C(t('admin.active')) ?></div>
+          <?php endif; ?>
+
           <div class="form-actions">
             <button type="submit" class="btn"><?= $C(t('admin.save')) ?></button>
             <a class="btn btn-ghost" href="detail.php?id=<?= (int)$hotelId ?>&tab=<?= $C($tab) ?>"><?= $C(t('admin.cancel')) ?></a>
           </div>
+
         </form>
       </div>
     </div>

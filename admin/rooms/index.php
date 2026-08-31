@@ -23,7 +23,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 $pg = AdminQuery::pagination(15);
 $q  = AdminQuery::search();
-$s  = AdminQuery::sort(['id','name','price','capacity','availability','sort_order'], 'name');
+$s  = AdminQuery::sort(['id','name','price','capacity','quantity','sort_order'], 'name');
 $hid = (int)($_GET['hotel_id'] ?? 0);
 
 $where = ['1=1']; $params = [];
@@ -75,11 +75,11 @@ $admin_active = 'rooms';
         <div class="table-wrap">
           <table>
             <thead><tr>
-              <th><?= htmlspecialchars(AdminQuery::sortLink('name', t('admin.name'), ['id','name','price','capacity','availability','sort_order'], 'name')) ?></th>
+              <th><?= AdminQuery::sortLink('name', t('admin.name'), ['id','name','price','capacity','quantity','sort_order'], 'name') ?></th>
               <th><?= htmlspecialchars(t('admin.hotel')) ?></th>
-              <th><?= htmlspecialchars(AdminQuery::sortLink('price', t('admin.price'), ['id','name','price','capacity','availability','sort_order'], 'name')) ?></th>
-              <th><?= htmlspecialchars(AdminQuery::sortLink('capacity', t('admin.capacity'), ['id','name','price','capacity','availability','sort_order'], 'name')) ?></th>
-              <th><?= htmlspecialchars(AdminQuery::sortLink('availability', t('admin.availability'), ['id','name','price','capacity','availability','sort_order'], 'name')) ?></th>
+              <th><?= AdminQuery::sortLink('price', t('admin.price'), ['id','name','price','capacity','quantity','sort_order'], 'name') ?></th>
+              <th><?= AdminQuery::sortLink('capacity', t('admin.capacity'), ['id','name','price','capacity','quantity','sort_order'], 'name') ?></th>
+              <th><?= AdminQuery::sortLink('quantity', t('admin.quantity', 'Quantity'), ['id','name','price','capacity','quantity','sort_order'], 'name') ?></th>
               <th><?= htmlspecialchars(t('admin.status')) ?></th>
               <th><?= htmlspecialchars(t('admin.actions')) ?></th>
             </tr></thead>
@@ -91,7 +91,7 @@ $admin_active = 'rooms';
                 <td><?= htmlspecialchars($r['hotel_name'] ?? '—') ?></td>
                 <td class="code"><?= htmlspecialchars(number_format((float)$r['price'], 2)) ?></td>
                 <td><?= (int)$r['capacity'] ?></td>
-                <td><?= (int)$r['availability'] ?></td>
+                <td><?= (int)$r['quantity'] ?></td>
                 <td><span class="badge badge-<?= (int)$r['is_active']?'active':'inactive' ?>"><?= (int)$r['is_active']?htmlspecialchars(t('admin.active')):htmlspecialchars(t('admin.inactive')) ?></span></td>
                 <td>
                   <div class="actions">

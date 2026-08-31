@@ -53,6 +53,20 @@ $forbidden = true;
 if ($reference !== '') {
     // Preferred path: ownership-scoped lookup by booking reference.
     $summary = BookingSummaryService::findByReference($reference, $userId);
+    if ($summary === null) {
+        $logFile = 'C:/Users/DESCKTOPCOMPUTER1923/.gemini/antigravity-ide/brain/ad5ebec5-2cb2-4945-bf56-e23282571035/scratch/debug_booking.txt';
+        $msg = "DEBUG: BookingSummaryService::findByReference returned null for ref={$reference}, userId={$userId}\n";
+        $pdo = getPDO();
+        $st = $pdo->prepare("SELECT id, user_id, booking_reference FROM hotel_bookings WHERE booking_reference = ?");
+        $st->execute([$reference]);
+        $dbRow = $st->fetch(PDO::FETCH_ASSOC);
+        if ($dbRow) {
+            $msg .= "DEBUG: Booking exists in DB. Row: " . json_encode($dbRow) . "\n";
+        } else {
+            $msg .= "DEBUG: Booking does NOT exist in DB for ref={$reference}!\n";
+        }
+        file_put_contents($logFile, $msg, FILE_APPEND);
+    }
     $forbidden = ($summary === null);
 } elseif ($legacyType !== '' && $legacyId > 0) {
     // Backward-compatible path: type+id (still ownership-scoped).

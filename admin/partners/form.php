@@ -16,13 +16,12 @@ if ($editing && !$row) { http_response_code(404);
 }
 
 $errors=[]; $alerts=[];
-$old = $row ?: ['name'=>'','website'=>'','icon'=>'','sort_order'=>0,'is_active'=>1];
+$old = $row ?: ['name'=>'','icon'=>'','sort_order'=>0,'is_active'=>1];
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!csrf_verify()) csrf_fail();
     $data = [
         'name'=>trim($_POST['name']??''),
-        'website'=>trim($_POST['website']??''),
         'sort_order'=>(int)($_POST['sort_order']??0),
         'is_active'=>!empty($_POST['is_active'])?1:0,
     ];
@@ -60,10 +59,7 @@ $admin_active = 'partners';
         </div>
         <form method="post" action="form.php<?= $editing?'?id='.(int)$id:'' ?>" enctype="multipart/form-data" novalidate>
           <?= csrf_field() ?>
-          <div class="grid-2">
-            <div class="field"><label><?= htmlspecialchars(t('admin.name')) ?> *</label><input type="text" name="name" value="<?= htmlspecialchars($old['name']) ?>" required></div>
-            <div class="field"><label><?= htmlspecialchars(t('admin.website')) ?></label><input type="url" name="website" value="<?= htmlspecialchars($old['website']) ?>" placeholder="https://"></div>
-          </div>
+          <div class="field"><label><?= htmlspecialchars(t('admin.name')) ?> *</label><input type="text" name="name" value="<?= htmlspecialchars($old['name']) ?>" required></div>
           <div class="field">
             <label><?= htmlspecialchars(t('admin.logo','Logo')) ?></label>
             <?php if (!empty($old['icon'])): ?><img class="preview-img" src="<?= htmlspecialchars($old['icon']) ?>" alt=""><br><?php endif; ?>

@@ -28,12 +28,14 @@ if ($action === 'toggle' && $id > 0 && $id !== $meId) {
         $cur = (string)$st->fetchColumn();
         $new = $cur === 'active' ? 'inactive' : 'active';
         $pdo->prepare('UPDATE users SET status = ? WHERE id = ?')->execute([$new, $id]);
+        Auth::logAudit('admin_user_status_toggled');
         admin_flash(t('admin.user_status_updated', 'User status updated.'), 'success');
         header('Location: ' . admin_url('users/index.php'));
         exit;
     }
     if ($action === 'delete' && $id > 0 && $id !== $meId) {
         $pdo->prepare('DELETE FROM users WHERE id = ?')->execute([$id]);
+        Auth::logAudit('admin_user_deleted');
         admin_flash(t('admin.user_deleted', 'User deleted.'), 'success');
         header('Location: ' . admin_url('users/index.php'));
         exit;
@@ -55,6 +57,9 @@ if ($q !== '') {
 if ($st !== '') {
     $where[] = 'status = :st';
     $params[':st'] = $st;
+}
+if (Auth::role() !== 'super_admin') {
+    $where[] = "role_id = (SELECT id FROM roles WHERE slug = 'customer')";
 }
 $whereSql = implode(' AND ', $where);
 
@@ -100,7 +105,7 @@ $admin_active       = 'users';
       <div class="card">
         <div class="card-head">
           <h3><i class="fa-solid fa-users"></i> <?= htmlspecialchars(t('admin.users')) ?></h3>
-          <span class="muted"><?= (int)$total ?> <?= htmlspecialchars(t('admin.users')) ?></span>
+          <a class="btn btn-sm" href="edit.php"><?= htmlspecialchars(t('admin.add_user', 'Add User')) ?></a>
         </div>
 
         <form method="get" action="index.php" class="toolbar">
@@ -122,12 +127,12 @@ $admin_active       = 'users';
           <table>
             <thead>
               <tr>
-                <th><?= htmlspecialchars(AdminQuery::sortLink('id', 'ID', ['id','first_name','email','status','created_at'], 'created_at')) ?></th>
-                <th><?= htmlspecialchars(AdminQuery::sortLink('first_name', t('admin.name'), ['id','first_name','email','status','created_at'], 'created_at')) ?></th>
+                <th><?= AdminQuery::sortLink('id', 'ID', ['id','first_name','email','status','created_at'], 'created_at') ?></th>
+                <th><?= AdminQuery::sortLink('first_name', t('admin.name'), ['id','first_name','email','status','created_at'], 'created_at') ?></th>
                 <th><?= htmlspecialchars(t('admin.email')) ?></th>
                 <th><?= htmlspecialchars(t('admin.phone')) ?></th>
                 <th><?= htmlspecialchars(t('admin.role')) ?></th>
-                <th><?= htmlspecialchars(AdminQuery::sortLink('status', t('admin.status'), ['id','first_name','email','status','created_at'], 'created_at')) ?></th>
+                <th><?= AdminQuery::sortLink('status', t('admin.status'), ['id','first_name','email','status','created_at'], 'created_at') ?></th>
                 <th><?= htmlspecialchars(t('admin.created')) ?></th>
                 <th><?= htmlspecialchars(t('admin.actions')) ?></th>
               </tr>

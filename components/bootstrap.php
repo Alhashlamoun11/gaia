@@ -26,6 +26,8 @@ define('GAIA_BOOTSTRAP_LOADED', true);
 
 require_once __DIR__ . '/../config.php';
 require_once __DIR__ . '/../db.php';
+require_once __DIR__ . '/../auth/Auth.php';
+Auth::startSession();
 
 /**
  * Load a settings array from a table.
@@ -211,6 +213,8 @@ function gaia_url($path, $moduleBase = '')
         $clean = 'transfer-booking';
     } elseif ($path === 'checkout.php') {
         $clean = 'checkout';
+    } elseif ($path === 'search-hotels.php') {
+        $clean = 'search-hotels';
     } elseif (strpos($path, 'index.php#') === 0) {
         $anchor = substr($path, strpos($path, '#') + 1);
         $map = [
@@ -300,6 +304,8 @@ $url = $script;
         $url = 'transfer-booking';
     } elseif ($script === 'checkout.php') {
         $url = 'checkout';
+    } elseif ($script === 'search-hotels.php') {
+        $url = 'search-hotels';
     } elseif ($script === 'page.php') {
         $url = $q['slug'] ?? 'about';
         unset($q['slug']);
@@ -329,15 +335,23 @@ function gaia_translations()
 /**
  * Translate a key for the current (or given) language.
  */
-function t($key, $lang = null)
+function t($key, $default = null, $lang = null)
 {
+    if ($lang === null && ($default === 'en' || $default === 'ar')) {
+        $lang = $default;
+        $default = null;
+    }
     if ($lang === null) {
         $lang = gaia_current_lang();
     }
     $all = gaia_translations();
-    return isset($all[$lang][$key]) && $all[$lang][$key] !== ''
-        ? $all[$lang][$key]
-        : (isset($all['en'][$key]) ? $all['en'][$key] : $key);
+    if (isset($all[$lang][$key]) && $all[$lang][$key] !== '') {
+        return $all[$lang][$key];
+    }
+    if (isset($all['en'][$key]) && $all['en'][$key] !== '') {
+        return $all['en'][$key];
+    }
+    return $default !== null ? $default : $key;
 }
 
 /**

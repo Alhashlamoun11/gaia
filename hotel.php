@@ -12,6 +12,7 @@
  * ------------------------------------------------------------
  */
 require_once __DIR__ . '/components/gaia-config.php';
+require_once __DIR__ . '/services/HotelAvailabilityService.php';
 
 $gaia_base          = '';
 $gaia_active        = 'hotels';
@@ -90,6 +91,22 @@ if (!$hotel) {
     $relatedTours = $toursStmt->fetchAll();
     if (empty($relatedTours)) {
         $relatedTours = $pdo->query("SELECT * FROM weroad_trips WHERE is_active = 1 ORDER BY rating DESC LIMIT 4")->fetchAll();
+    }
+}
+
+// Search context (from search-hotels.php or direct)
+$searchCtx = HotelAvailabilityService::validateSearchContext($_GET);
+$hasSearchCtx = $searchCtx !== null;
+
+// Pre-compute availability per room if search context exists
+$roomAvailability = [];
+if (!$is404 && $hasSearchCtx && !empty($rooms)) {
+    foreach ($rooms as $r) {
+        $avail = HotelAvailabilityService::availableInventory(
+            $pdo, (int)$r['id'], (int)$r['quantity'],
+            $searchCtx['check_in'], $searchCtx['check_out']
+        );
+        $roomAvailability[(int)$r['id']] = $avail;
     }
 }
 
@@ -241,7 +258,7 @@ $currency = site_setting('currency_symbol', '$');
       <nav class="gaia-breadcrumb">
         <a href="<?= gaia_url('index.php') ?>"><?= t('detail.home', 'Home') ?></a>
         <span class="sep">/</span>
-        <a href="<?= gaia_url('index.php') ?>"><?= t('detail.hotels', 'Hotels') ?></a>
+        <a href="<?= gaia_url('search-hotels.php') ?>"><?= t('detail.hotels', 'Hotels') ?></a>
         <span class="sep">/</span>
         <span><?= htmlspecialchars($hotelName) ?></span>
       </nav>
@@ -291,20 +308,41 @@ $currency = site_setting('currency_symbol', '$');
 
         <!-- Rooms -->
         <?php if (!empty($rooms)): ?>
-        <section class="section">
+        <section class="section" id="rooms">
           <div class="section-head"><h2><?= t('hotel.rooms', 'Available Rooms') ?></h2><div class="eyebrow"></div></div>
           <div class="rooms-grid">
-            <?php foreach ($rooms as $r): ?>
-            <a class="room-card" href="<?= gaia_url('room.php') ?>?id=<?= (int)$r['id'] ?>">
-              <div class="media"><img src="<?= htmlspecialchars($r['image_url']) ?>" alt="<?= htmlspecialchars(lang_value($r, 'name')) ?>" loading="lazy"></div>
+            <?php foreach ($rooms as $r):
+              $rId = (int)$r['id'];
+              $roomUrl = gaia_url('room.php') . '?id=' . $rId;
+              if ($hasSearchCtx) {
+                  $roomUrl .= '&' . HotelAvailabilityService::searchContextQuery($searchCtx);
+              }
+              $avail = $roomAvailability[$rId] ?? null;
+              $isSoldOut = ($hasSearchCtx && $avail !== null && $avail < $searchCtx['rooms']);
+            ?>
+            <a class="room-card" href="<?= htmlspecialchars($roomUrl) ?>" <?= $isSoldOut ? 'style="opacity:.55; pointer-events:none;"' : '' ?>>
+              <div class="media">
+                <img src="<?= htmlspecialchars($r['image_url']) ?>" alt="<?= htmlspecialchars(lang_value($r, 'name')) ?>" loading="lazy">
+                <?php if ($hasSearchCtx && $avail !== null): ?>
+                  <?php if ($isSoldOut): ?>
+                    <div style="position:absolute; top:10px; right:10px; background:#d32f2f; color:#fff; padding:4px 12px; border-radius:20px; font-size:12px; font-weight:700;"><?= htmlspecialchars(t('hotel.sold_out', 'Sold Out')) ?></div>
+                  <?php else: ?>
+                    <div style="position:absolute; top:10px; right:10px; background:#2e7d32; color:#fff; padding:4px 12px; border-radius:20px; font-size:12px; font-weight:700;"><?= $avail ?> <?= htmlspecialchars(t('hotel.rooms_available', 'Rooms Available')) ?></div>
+                  <?php endif; ?>
+                <?php endif; ?>
+              </div>
               <div class="body">
                 <h3><?= htmlspecialchars(lang_value($r, 'name')) ?></h3>
                 <div class="meta">
                   <span><i class="fa-solid fa-user"></i> <?= (int)$r['capacity'] ?></span>
                   <span><i class="fa-solid fa-bed"></i> <?= htmlspecialchars(lang_value($r, 'beds')) ?></span>
                   <?php if (!empty($r['size_sqm'])): ?><span><i class="fa-solid fa-ruler-combined"></i> <?= (int)$r['size_sqm'] ?> m²</span><?php endif; ?>
-                </div>
-                <span class="price"><?= $currency ?><?= number_format((float)$r['price'], 0) ?> <small><?= t('hotel.per_night', '/ night') ?></small></span>
+                <?php
+                  $gatewayFee = (float) site_setting('payment_gateway_fee_percent', '2.5');
+                  $adminCommission = (float)($hotel['admin_commission_percent'] ?? 0);
+                  $userPrice = (float)$r['price'] * (1 + $adminCommission / 100) * (1 + $gatewayFee / 100);
+                ?>
+                <span class="price"><?= $currency ?><?= number_format($userPrice, 0) ?> <small><?= t('hotel.per_night', '/ night') ?></small></span>
               </div>
             </a>
             <?php endforeach; ?>
@@ -357,7 +395,7 @@ $currency = site_setting('currency_symbol', '$');
             <?php endif; ?>
           </div>
           <div class="cta">
-            <a class="gaia-btn" href="<?= gaia_url('contact') ?>"><?= t('hotel.quick_booking', 'Quick Booking') ?></a>
+            <a class="gaia-btn" href="#rooms"><?= t('hotel.quick_booking', 'Quick Booking') ?></a>
             <a class="gaia-btn gaia-btn-ghost" href="https://wa.me/<?= htmlspecialchars(site_setting('contact_whatsapp', '962790123456')) ?>" target="_blank" rel="noopener"><?= t('hotel.contact', 'Contact Hotel') ?></a>
           </div>
         </div>

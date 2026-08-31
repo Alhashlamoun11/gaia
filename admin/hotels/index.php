@@ -84,20 +84,27 @@ $admin_active = 'hotels';
         <div class="table-wrap">
           <table>
             <thead><tr>
-              <th><?= htmlspecialchars(AdminQuery::sortLink('name', t('admin.name'), ['id','name','star_rating','price_from','created_at'], 'name')) ?></th>
+              <th><?= AdminQuery::sortLink('name', t('admin.name'), ['id','name','star_rating','price_from','created_at'], 'name') ?></th>
               <th><?= htmlspecialchars(t('admin.slug')) ?></th>
-              <th><?= htmlspecialchars(AdminQuery::sortLink('star_rating', t('admin.stars'), ['id','name','star_rating','price_from','created_at'], 'name')) ?></th>
-              <th><?= htmlspecialchars(AdminQuery::sortLink('price_from', t('admin.price'), ['id','name','star_rating','price_from','created_at'], 'name')) ?></th>
+              <th><?= htmlspecialchars(t('admin.manager', 'Manager')) ?></th>
+              <th><?= AdminQuery::sortLink('star_rating', t('admin.stars'), ['id','name','star_rating','price_from','created_at'], 'name') ?></th>
+              <th><?= AdminQuery::sortLink('price_from', t('admin.price'), ['id','name','star_rating','price_from','created_at'], 'name') ?></th>
               <th><?= htmlspecialchars(t('admin.status')) ?></th>
               <th><?= htmlspecialchars(t('admin.actions')) ?></th>
             </tr></thead>
             <tbody>
             <?php if (!$rows): ?>
-              <tr><td colspan="6"><div class="muted" style="text-align:center;padding:20px;"><?= htmlspecialchars(t('admin.no_records')) ?></div></td></tr>
+              <tr><td colspan="7"><div class="muted" style="text-align:center;padding:20px;"><?= htmlspecialchars(t('admin.no_records')) ?></div></td></tr>
             <?php else: foreach ($rows as $r): ?>
+              <?php
+                $mgrStmt = $pdo->prepare("SELECT CONCAT(first_name, ' ', last_name) FROM users u JOIN hotels_users hu ON hu.user_id = u.id WHERE hu.hotel_id = ? LIMIT 1");
+                $mgrStmt->execute([(int)$r['id']]);
+                $managerName = $mgrStmt->fetchColumn() ?: 'None';
+              ?>
               <tr>
                 <td class="code"><?= htmlspecialchars($r['name']) ?></td>
                 <td><?= htmlspecialchars($r['slug']) ?></td>
+                <td><?= htmlspecialchars($managerName) ?></td>
                 <td><?= str_repeat('★', (int)$r['star_rating']) ?></td>
                 <td class="code"><?= htmlspecialchars(number_format((float)$r['price_from'], 2)) ?></td>
                 <td><span class="badge badge-<?= (int)$r['is_active']?'active':'inactive' ?>"><?= (int)$r['is_active']?htmlspecialchars(t('admin.active')):htmlspecialchars(t('admin.inactive')) ?></span></td>

@@ -430,6 +430,15 @@ h6 {
     opacity: 1;
 }
 
+.gaia-header-avatar {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    object-fit: cover;
+    display: inline-block;
+    vertical-align: middle;
+}
+
 .gaia-bookings-badge {
     display: inline-flex;
     align-items: center;

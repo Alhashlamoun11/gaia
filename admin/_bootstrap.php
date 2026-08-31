@@ -48,8 +48,22 @@ function require_admin()
         header('Location: ' . (function_exists('gaia_url') ? gaia_url('login.php') : 'login.php') . '?redirect=' . rawurlencode($target));
         exit;
     }
-    if (Auth::role() !== 'super_admin') {
+    $role = Auth::role();
+    if ($role !== 'super_admin' && $role !== 'admin') {
         header('Location: ' . (function_exists('gaia_url') ? gaia_url('index.php') : 'index.php'));
+        exit;
+    }
+}
+
+/**
+ * Enforce the super_admin guard. Non-super_admins go home or get 403.
+ */
+function require_super_admin()
+{
+    require_admin();
+    if (Auth::role() !== 'super_admin') {
+        http_response_code(403);
+        echo "403 Forbidden - Super Admin access required.";
         exit;
     }
 }

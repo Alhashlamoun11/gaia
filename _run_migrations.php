@@ -25,6 +25,12 @@ __DIR__ . '/schema-migration-10.sql',
     __DIR__ . '/schema-migration-14.sql',
     __DIR__ . '/schema-migration-15.sql',
     __DIR__ . '/schema-migration-16.sql',
+    __DIR__ . '/schema-migration-17.sql',
+    __DIR__ . '/schema-migration-18.sql',
+    __DIR__ . '/schema-migration-19.sql',
+    __DIR__ . '/schema-migration-20.sql',
+    __DIR__ . '/schema-migration-21.sql',
+    __DIR__ . '/schema-migration-22.sql',
 ];
 
 // Only run the newest one (this runner is for incremental changes).

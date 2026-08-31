@@ -84,8 +84,13 @@ function gaia_icon_account() {
 <header class="gaia-header <?= $gaia_header_style === 'overlay' ? 'gaia-header-overlay' : 'gaia-header-solid' ?> <?= gaia_is_rtl() ? 'gaia-header-rtl' : 'gaia-header-ltr' ?>" dir="<?= $gaiaDir ?>">
   <div class="gaia-header-inner">
 
+    <?php
+      $gaiaLogoUrl = ($gaia_active === 'tours')
+          ? $gaia_base . 'assets/images/logo-mark.png'
+          : $gaia_base . '/assets/images/image.png';
+    ?>
     <a class="gaia-header-logo" href="<?= gaia_url('index.php', $gaia_base) ?>">
-      <img src="<?= htmlspecialchars(site_setting('logo_image', 'assets/images/image.png')) ?>" alt="<?= htmlspecialchars($gaia_company_short) ?>" class="gaia-logo-mark">
+      <img src="<?= htmlspecialchars($gaiaLogoUrl) ?>" alt="<?= htmlspecialchars($gaia_company_short) ?>" class="gaia-logo-mark">
     </a>
 
     <nav class="gaia-nav" aria-label="Main navigation">

@@ -110,7 +110,7 @@ $gaia_cookies_label = site_setting('footer_cookies_label', t('footer.cookies'));
     </div>
     <div class="gaia-footer-copyright">
       <?= t_fmt('footer.copyright', ['year' => date('Y')]) ?>
-      <a href="<?= gaia_url('contact') ?>"><?= htmlspecialchars($gaia_terms_label) ?></a> · <a href="<?= gaia_url('contact') ?>"><?= htmlspecialchars($gaia_privacy_label) ?></a> · <a href="<?= gaia_url('contact') ?>"><?= htmlspecialchars($gaia_cookies_label) ?></a>
+      <a href="<?= gaia_url('contact') ?>"><?= htmlspecialchars($gaia_terms_label) ?></a> · <a href="<?= gaia_url('contact') ?>"><?= htmlspecialchars($gaia_privacy_label) ?></a> · <a href="<?= gaia_url('contact') ?>"><?= htmlspecialchars($gaia_cookies_label) ?></a> · <a href="<?= gaia_url('partner/apply.php', $gaia_base) ?>"><?= htmlspecialchars(t('partner.join_title', 'Join as a Partner')) ?></a>
     </div>
   </div>
 </footer>

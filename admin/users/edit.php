@@ -13,26 +13,58 @@ require_admin();
 $pdo       = getPDO();
 $adminUser = admin_user();
 $meId      = (int)$adminUser['id'];
-$id        = (int)($_GET['id'] ?? 0);
+$editing = $id > 0;
+$user    = null;
 
-$stmt = $pdo->prepare('SELECT * FROM users WHERE id = ?');
-$stmt->execute([$id]);
-$user = $stmt->fetch();
+if ($editing) {
+    $stmt = $pdo->prepare('SELECT * FROM users WHERE id = ?');
+    $stmt->execute([$id]);
+    $user = $stmt->fetch();
 
-if (!$user) {
-    http_response_code(404);
-    $admin_page_title = t('admin.not_found', 'Not Found') . ' — GAIA TOURS &amp; TRAVEL';
-    $admin_topbar_title = t('admin.not_found', 'Not Found');
-    $admin_active       = 'users';
-    require __DIR__ . '/../components/header.php';
-    echo '<div class="admin-app"><div class="admin-main"><div class="admin-content"><div class="card"><div class="muted" style="text-align:center;padding:40px;">' . htmlspecialchars(t('admin.not_found_text', 'User not found.')) . '</div></div></div></div></div>';
-    require __DIR__ . '/../components/footer.php';
-    exit;
+    if (!$user) {
+        http_response_code(404);
+        $admin_page_title = t('admin.not_found', 'Not Found') . ' — GAIA TOURS &amp; TRAVEL';
+        $admin_topbar_title = t('admin.not_found', 'Not Found');
+        $admin_active       = 'users';
+        require __DIR__ . '/../components/header.php';
+        echo '<div class="admin-app"><div class="admin-main"><div class="admin-content"><div class="card"><div class="muted" style="text-align:center;padding:40px;">' . htmlspecialchars(t('admin.not_found_text', 'User not found.')) . '</div></div></div></div></div>';
+        require __DIR__ . '/../components/footer.php';
+        exit;
+    }
+
+    if (Auth::role() !== 'super_admin') {
+        $targetRoleStmt = $pdo->prepare('SELECT slug FROM roles WHERE id = ?');
+        $targetRoleStmt->execute([$user['role_id']]);
+        $targetRole = $targetRoleStmt->fetchColumn();
+        if ($targetRole !== 'customer') {
+            http_response_code(403);
+            echo "403 Forbidden - You can only edit customers.";
+            exit;
+        }
+    }
+} else {
+    $user = [
+        'id' => 0,
+        'first_name' => '',
+        'last_name' => '',
+        'email' => '',
+        'phone' => '',
+        'country' => '',
+        'preferred_language' => 'en',
+        'role_id' => 3,
+        'status' => 'active'
+    ];
+    $r = $pdo->query("SELECT id FROM roles WHERE slug = 'customer' LIMIT 1")->fetch();
+    if ($r) $user['role_id'] = (int)$r['id'];
 }
 
 $isSelf = ($id === $meId);
 
-$roles = $pdo->query('SELECT id, name, slug FROM roles ORDER BY id')->fetchAll();
+if (Auth::role() === 'super_admin') {
+    $roles = $pdo->query('SELECT id, name, slug FROM roles ORDER BY id')->fetchAll();
+} else {
+    $roles = $pdo->query("SELECT id, name, slug FROM roles WHERE slug = 'customer' ORDER BY id")->fetchAll();
+}
 
 $alerts = [];
 $errors = [];
@@ -52,6 +84,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if ($first === '') $errors[] = t('auth.first_name', 'First name is required.');
     if ($last === '')  $errors[] = t('auth.last_name', 'Last name is required.');
+    
     $roleExists = false;
     foreach ($roles as $r) { if ((int)$r['id'] === $roleId) { $roleExists = true; break; } }
     if (!$roleExists) $errors[] = 'Invalid role.';
@@ -60,20 +93,52 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $errors[] = t('admin.self_lockout', 'You cannot change your own role or status.');
     }
 
+    $email = '';
+    $password = '';
+    if (!$editing) {
+        $email = strtolower(trim($_POST['email'] ?? ''));
+        $password = $_POST['password'] ?? '';
+        if ($email === '' || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            $errors[] = t('auth.email_invalid', 'A valid email is required.');
+        } else {
+            $checkEmail = $pdo->prepare('SELECT COUNT(*) FROM users WHERE email = ?');
+            $checkEmail->execute([$email]);
+            if ((int)$checkEmail->fetchColumn() > 0) {
+                $errors[] = t('auth.email_taken', 'Email is already taken.');
+            }
+        }
+        if (strlen($password) < 6) {
+            $errors[] = t('auth.password_min', 'Password must be at least 6 characters.');
+        }
+    }
+
     if (!$errors) {
-        $pdo->prepare('UPDATE users SET first_name=?, last_name=?, phone=?, country=?, preferred_language=?, role_id=?, status=? WHERE id=?')
-            ->execute([$first, $last, $phone !== '' ? $phone : null, $country !== '' ? $country : null, $lang, $roleId, $status, $id]);
-        $alerts[] = ['type' => 'success', 'msg' => t('admin.user_updated', 'User updated successfully.')];
-        // reload
-        $stmt = $pdo->prepare('SELECT * FROM users WHERE id = ?');
-        $stmt->execute([$id]);
-        $user = $stmt->fetch();
+        if ($editing) {
+            $pdo->prepare('UPDATE users SET first_name=?, last_name=?, phone=?, country=?, preferred_language=?, role_id=?, status=? WHERE id=?')
+                ->execute([$first, $last, $phone !== '' ? $phone : null, $country !== '' ? $country : null, $lang, $roleId, $status, $id]);
+            $alerts[] = ['type' => 'success', 'msg' => t('admin.user_updated', 'User updated successfully.')];
+            // reload
+            $stmt = $pdo->prepare('SELECT * FROM users WHERE id = ?');
+            $stmt->execute([$id]);
+            $user = $stmt->fetch();
+        } else {
+            $hash = password_hash($password, PASSWORD_BCRYPT);
+            $stmt = $pdo->prepare(
+                'INSERT INTO users (first_name, last_name, email, phone, country, preferred_language, password_hash, role_id, status, email_verified_at)
+                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())'
+            );
+            $stmt->execute([$first, $last, $email, $phone !== '' ? $phone : null, $country !== '' ? $country : null, $lang, $hash, $roleId, $status]);
+            $newId = (int)$pdo->lastInsertId();
+            admin_flash(t('admin.user_created', 'User created successfully.'), 'success');
+            header('Location: edit.php?id=' . $newId);
+            exit;
+        }
     }
 }
 
 $account_alerts     = array_merge(array_map(fn($e) => ['type' => 'error', 'msg' => $e], $errors), $alerts);
-$admin_page_title   = t('admin.edit') . ' — GAIA TOURS &amp; TRAVEL';
-$admin_topbar_title = t('admin.edit');
+$admin_page_title   = ($editing ? t('admin.edit') : t('admin.add_user', 'Add User')) . ' — GAIA TOURS &amp; TRAVEL';
+$admin_topbar_title = $editing ? t('admin.edit') : t('admin.add_user', 'Add User');
 $admin_active       = 'users';
 ?>
 <?php require __DIR__ . '/../components/header.php'; ?>
@@ -86,8 +151,10 @@ $admin_active       = 'users';
 
       <div class="card">
         <div class="card-head">
-          <h3><i class="fa-solid fa-pen"></i> <?= htmlspecialchars(t('admin.edit')) ?> — <?= htmlspecialchars(trim($user['first_name'] . ' ' . $user['last_name'])) ?></h3>
-          <a class="btn btn-ghost btn-sm" href="view.php?id=<?= (int)$id ?>"><?= htmlspecialchars(t('admin.view')) ?></a>
+          <h3><i class="fa-solid fa-pen"></i> <?= $editing ? (htmlspecialchars(t('admin.edit')) . ' — ' . htmlspecialchars(trim($user['first_name'] . ' ' . $user['last_name']))) : htmlspecialchars(t('admin.add_user', 'Add User')) ?></h3>
+          <?php if ($editing): ?>
+            <a class="btn btn-ghost btn-sm" href="view.php?id=<?= (int)$id ?>"><?= htmlspecialchars(t('admin.view')) ?></a>
+          <?php endif; ?>
         </div>
 
         <form method="post" action="edit.php?id=<?= (int)$id ?>" novalidate>
@@ -103,9 +170,19 @@ $admin_active       = 'users';
             </div>
           </div>
           <div class="field">
-            <label><?= htmlspecialchars(t('admin.email')) ?></label>
-            <input type="email" value="<?= htmlspecialchars($user['email']) ?>" disabled>
+            <label><?= htmlspecialchars(t('admin.email')) ?> *</label>
+            <?php if ($editing): ?>
+              <input type="email" value="<?= htmlspecialchars($user['email']) ?>" disabled>
+            <?php else: ?>
+              <input type="email" name="email" value="<?= htmlspecialchars($user['email']) ?>" required>
+            <?php endif; ?>
           </div>
+          <?php if (!$editing): ?>
+            <div class="field">
+              <label><?= htmlspecialchars(t('admin.password', 'Password')) ?> *</label>
+              <input type="password" name="password" required>
+            </div>
+          <?php endif; ?>
           <div class="grid-2">
             <div class="field"><label><?= htmlspecialchars(t('admin.phone')) ?></label><input type="tel" name="phone" value="<?= htmlspecialchars($user['phone']) ?>"></div>
             <div class="field"><label><?= htmlspecialchars(t('admin.country', 'Country')) ?></label><input type="text" name="country" value="<?= htmlspecialchars($user['country']) ?>"></div>
@@ -125,7 +202,7 @@ $admin_active       = 'users';
                   <option value="<?= (int)$r['id'] ?>" <?= (int)$user['role_id'] === (int)$r['id'] ? 'selected' : '' ?>><?= htmlspecialchars($r['name']) ?></option>
                 <?php endforeach; ?>
               </select>
-              <?php if (!$isSelf && (int)$user['role_id'] !== 1): ?>
+              <?php if ($isSelf): ?>
                 <input type="hidden" name="role_id" value="<?= (int)$user['role_id'] ?>">
               <?php endif; ?>
             </div>
@@ -137,7 +214,7 @@ $admin_active       = 'users';
               <option value="inactive" <?= $user['status'] === 'inactive' ? 'selected' : '' ?>><?= htmlspecialchars(t('admin.inactive')) ?></option>
               <option value="suspended" <?= $user['status'] === 'suspended' ? 'selected' : '' ?>><?= htmlspecialchars(t('admin.suspended', 'Suspended')) ?></option>
             </select>
-            <?php if (!$isSelf && $user['status'] !== 'active'): ?>
+            <?php if ($isSelf): ?>
               <input type="hidden" name="status" value="<?= htmlspecialchars($user['status']) ?>">
             <?php endif; ?>
           </div>

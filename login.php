@@ -31,8 +31,12 @@ $redirect = safe_redirect_target($_GET['redirect'] ?? '');
 // Already logged in? Send to the right place.
 if (Auth::check()) {
     $role = Auth::role();
-    if ($role === 'super_admin' || $role === 'hotel_manager') {
-        header('Location: ' . (function_exists('gaia_url') ? gaia_url('index.php') : 'index.php'));
+    if ($role === 'super_admin') {
+        header('Location: ' . (function_exists('gaia_url') ? gaia_url('admin/index.php') : 'admin/index.php'));
+        exit;
+    }
+    if ($role === 'hotel_manager') {
+        header('Location: ' . (function_exists('gaia_url') ? gaia_url('hotel/index.php') : 'hotel/index.php'));
         exit;
     }
     if ($redirect !== '') {
@@ -65,8 +69,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 [$ok, $errKey] = Auth::login($email, $password, $remember);
         if ($ok) {
             $role = Auth::role();
-            if ($role === 'super_admin' || $role === 'hotel_manager') {
-                header('Location: ' . (function_exists('gaia_url') ? gaia_url('index.php') : 'index.php'));
+            if ($role === 'super_admin') {
+                header('Location: ' . (function_exists('gaia_url') ? gaia_url('admin/index.php') : 'admin/index.php'));
+                exit;
+            }
+            if ($role === 'hotel_manager') {
+                header('Location: ' . (function_exists('gaia_url') ? gaia_url('hotel/index.php') : 'hotel/index.php'));
                 exit;
             }
             if ($redirect !== '') {

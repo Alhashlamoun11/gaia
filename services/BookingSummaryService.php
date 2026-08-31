@@ -83,6 +83,7 @@ class BookingSummaryService
                 'status'             => $row['status'] ?? 'pending',
                 'created_date'       => $row['created_date'] ?? '',
                 'user_id'            => $userId,
+                'admin_commission_percent' => isset($row['admin_commission_percent']) ? (float)$row['admin_commission_percent'] : null,
             ];
         } catch (PDOException $e) {
             return null;

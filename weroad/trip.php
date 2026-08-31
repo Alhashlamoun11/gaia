@@ -229,7 +229,7 @@ require __DIR__ . '/../components/gaia-header.php';
 
       <?php if (!empty($departures)): ?>
         <?php $firstDep = $departures[0]; ?>
-        <a href="<?= gaia_url('booking.php', '../') ?>?trip_id=<?php echo (int)$trip['id']; ?>&departure_id=<?php echo (int)$firstDep['id']; ?>" class="btn btn-primary btn-block"><?= t('tours.trip_see_dates') ?></a>
+        <a href="<?= gaia_url('weroad/booking.php') ?>?trip_id=<?php echo (int)$trip['id']; ?>&departure_id=<?php echo (int)$firstDep['id']; ?>" class="btn btn-primary btn-block"><?= t('tour.book_now', 'Book Now') ?></a>
         <div class="spots"><?= t_fmt('tours.trip_spots_left', ['count' => (int)$firstDep['spots_left'], 'month' => date('F', strtotime($firstDep['start_date']))]) ?></div>
         <div class="info-line">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>

@@ -314,15 +314,15 @@ if (!$is404) {
   <!-- ================= CTA ================= -->
   <section class="section">
     <div class="container">
-      <div class="cta-band">
-        <div>
-          <h3><?= htmlspecialchars($eventTitle) ?></h3>
-          <p><?= t('event.book_cta_sub', 'Limited seats — reserve your spot today.') ?></p>
-        </div>
-        <a class="gaia-btn gaia-btn-gold" href="<?= gaia_url('contact') ?>"><?= t('event.book_cta', 'Reserve Your Spot') ?></a>
+      <div class="cta-band" style="text-align: center; justify-content: center; display: flex; flex-direction: column; align-items: center; width: 100%;">
+        <h3 style="font-family: 'Playfair Display', 'Cairo', serif; font-size: 26px; margin: 0 0 10px 0; color: #fff;"><?= htmlspecialchars($eventTitle) ?></h3>
+        <p style="font-size: 16px; color: var(--gaia-gold-light); font-weight: 600; margin: 0;">
+          <?= gaia_current_lang() === 'ar' ? 'سيتم توفير هذه الميزة قريباً' : 'This feature will be available soon' ?>
+        </p>
       </div>
     </div>
   </section>
+
 
 <?php endif; ?>
 

@@ -167,12 +167,12 @@ $admin_active       = 'bookings';
           <table>
             <thead>
               <tr>
-                <th><?= htmlspecialchars(AdminQuery::sortLink('booking_reference', t('admin.reference'), ['id','created_at','total_price','status'], 'created_at')) ?></th>
+                <th><?= AdminQuery::sortLink('booking_reference', t('admin.reference'), ['id','created_at','total_price','status'], 'created_at') ?></th>
                 <th><?= htmlspecialchars(t('admin.type', 'Type')) ?></th>
                 <th><?= htmlspecialchars(t('admin.customer')) ?></th>
-                <th><?= htmlspecialchars(AdminQuery::sortLink('total_price', t('admin.amount'), ['id','created_at','total_price','status'], 'created_at')) ?></th>
-                <th><?= htmlspecialchars(AdminQuery::sortLink('status', t('admin.status'), ['id','created_at','total_price','status'], 'created_at')) ?></th>
-                <th><?= htmlspecialchars(AdminQuery::sortLink('created_at', t('admin.created'), ['id','created_at','total_price','status'], 'created_at')) ?></th>
+                <th><?= AdminQuery::sortLink('total_price', t('admin.amount'), ['id','created_at','total_price','status'], 'created_at') ?></th>
+                <th><?= AdminQuery::sortLink('status', t('admin.status'), ['id','created_at','total_price','status'], 'created_at') ?></th>
+                <th><?= AdminQuery::sortLink('created_at', t('admin.created'), ['id','created_at','total_price','status'], 'created_at') ?></th>
                 <th><?= htmlspecialchars(t('admin.actions')) ?></th>
               </tr>
             </thead>

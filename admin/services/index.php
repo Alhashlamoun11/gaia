@@ -76,9 +76,9 @@ $admin_active = 'services';
           <table>
             <thead><tr>
               <th><?= htmlspecialchars(t('admin.icon')) ?></th>
-              <th><?= htmlspecialchars(AdminQuery::sortLink('title', t('admin.title'), ['id','title','sort_order'], 'sort_order')) ?></th>
+              <th><?= AdminQuery::sortLink('title', t('admin.title'), ['id','title','sort_order'], 'sort_order') ?></th>
               <th><?= htmlspecialchars(t('admin.description')) ?></th>
-              <th><?= htmlspecialchars(AdminQuery::sortLink('sort_order', t('admin.sort_order'), ['id','title','sort_order'], 'sort_order')) ?></th>
+              <th><?= AdminQuery::sortLink('sort_order', t('admin.sort_order'), ['id','title','sort_order'], 'sort_order') ?></th>
               <th><?= htmlspecialchars(t('admin.status')) ?></th>
               <th><?= htmlspecialchars(t('admin.actions')) ?></th>
             </tr></thead>

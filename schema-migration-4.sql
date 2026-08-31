@@ -171,7 +171,7 @@ CREATE TABLE IF NOT EXISTS booking_options (
 -- 11) Extra settings
 -- ------------------------------------------------------------
 INSERT IGNORE INTO settings (`key`, `value`, `type`, `group`, is_active) VALUES
-('logo_image', 'assets/images/image.png', 'image', 'company', 1),
+('logo_image', '/assets/images/image.png', 'image', 'company', 1),
 ('logo_mark_text', 'G', 'text', 'company', 1),
 ('payment_icons', 'VISA,MC,AMEX,Pay,G Pay', 'text', 'footer', 1),
 ('footer_about', 'One company. One platform. GAIA Tours & GAIA Night — group tours, hotels, private transfers, night events and VIP experiences, all under one GAIA brand.', 'textarea', 'footer', 1),
@@ -480,7 +480,7 @@ INSERT IGNORE INTO translations (`key`, lang, `value`, `group`) VALUES
 -- 13) Seed media entries
 -- ------------------------------------------------------------
 INSERT IGNORE INTO media (`key`, file_path, alt_text, title, sort_order, is_cover, is_active) VALUES
-('logo', 'assets/images/image.png', 'GAIA Tours & Travel logo', 'GAIA Logo', 1, 1, 1),
+('logo', '/assets/images/image.png', 'GAIA Tours & Travel logo', 'GAIA Logo', 1, 1, 1),
 ('logo_mark', 'assets/images/logo-mark.png', 'GAIA mark', 'GAIA Mark', 2, 0, 1),
 ('hero_home', 'https://images.pexels.com/photos/8872883/pexels-photo-8872883.jpeg?auto=compress&cs=tinysrgb&w=1920', 'Airport transfer hero', 'Home Hero', 1, 1, 1),
 ('hero_night', 'https://images.unsplash.com/photo-1502920917128-1aa500764cbd?w=1920&q=80', 'GAIA Night hero', 'Night Hero', 1, 1, 1),

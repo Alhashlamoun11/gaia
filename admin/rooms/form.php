@@ -17,7 +17,7 @@ if ($editing && !$row) { http_response_code(404);
 
 $hotels = $pdo->query("SELECT id,name FROM hotels ORDER BY name")->fetchAll();
 $errors = []; $alerts = [];
-$old = $row ?: ['hotel_id'=>0,'name'=>'','description'=>'','price'=>0,'capacity'=>2,'availability'=>1,'image_url'=>'','beds'=>'','size_sqm'=>null,'facilities'=>'','gallery_urls'=>'','sort_order'=>0,'is_active'=>1];
+$old = $row ?: ['hotel_id'=>0,'name'=>'','description'=>'','price'=>0,'capacity'=>2,'quantity'=>1,'image_url'=>'','beds'=>'','size_sqm'=>null,'facilities'=>'','gallery_urls'=>'','sort_order'=>0,'is_active'=>1];
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!csrf_verify()) csrf_fail();
@@ -27,7 +27,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         'description' => trim($_POST['description'] ?? ''),
         'price' => (float)($_POST['price'] ?? 0),
         'capacity' => max(1,(int)($_POST['capacity'] ?? 2)),
-        'availability' => max(0,(int)($_POST['availability'] ?? 1)),
+        'quantity' => max(0,(int)($_POST['quantity'] ?? 1)),
         'beds' => trim($_POST['beds'] ?? ''),
         'size_sqm' => ($_POST['size_sqm'] ?? '') !== '' ? max(0,(int)$_POST['size_sqm']) : null,
         'facilities' => trim($_POST['facilities'] ?? ''),
@@ -85,7 +85,7 @@ $admin_active = 'rooms';
           <div class="grid-3">
             <div class="field"><label><?= htmlspecialchars(t('admin.price')) ?></label><input type="number" step="0.01" name="price" value="<?= htmlspecialchars($old['price']) ?>"></div>
             <div class="field"><label><?= htmlspecialchars(t('admin.capacity')) ?></label><input type="number" name="capacity" value="<?= (int)$old['capacity'] ?>"></div>
-            <div class="field"><label><?= htmlspecialchars(t('admin.availability')) ?></label><input type="number" name="availability" value="<?= (int)$old['availability'] ?>"></div>
+            <div class="field"><label><?= htmlspecialchars(t('admin.quantity', 'Quantity')) ?></label><input type="number" name="quantity" value="<?= (int)$old['quantity'] ?>"></div>
           </div>
           <div class="grid-3">
             <div class="field"><label><?= htmlspecialchars(t('admin.beds', 'Beds')) ?></label><input type="text" name="beds" value="<?= htmlspecialchars($old['beds'] ?? '') ?>" placeholder="1 Queen Bed"></div>

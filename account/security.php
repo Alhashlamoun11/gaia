@@ -22,6 +22,7 @@ require_once __DIR__ . '/../auth/middleware.php';
 require_once __DIR__ . '/../auth/helpers.php';
 require_once __DIR__ . '/../auth/csrf.php';
 require_once __DIR__ . '/../services/SessionService.php';
+require_once __DIR__ . '/../services/EmailService.php';
 
 $gaia_base         = '';
 $gaia_active       = 'home';
@@ -71,6 +72,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $upd = $pdo->prepare('UPDATE users SET password_hash = :hash, updated_at = NOW() WHERE id = :id');
             $upd->execute([':hash' => $newHash, ':id' => $userId]);
             $alerts[] = ['type' => 'success', 'msg' => t('account.password_updated', 'Password updated successfully.')];
+            // Send password changed notification email (best-effort)
+            $firstName = trim(($user['first_name'] ?? '') . ' ' . ($user['last_name'] ?? ''));
+            EmailService::sendPasswordChanged(
+                $user['email'] ?? '',
+                $firstName ?: 'User',
+                gaia_current_lang()
+            );
         }
     }
 }

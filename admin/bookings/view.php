@@ -102,6 +102,10 @@ $admin_active       = 'bookings';
             <div><span><?= htmlspecialchars(t('admin.phone')) ?></span><strong><?= htmlspecialchars($row['guest_phone'] ?? $row['phone'] ?? '') ?></strong></div>
             <div><span><?= htmlspecialchars(t('admin.amount')) ?></span><strong class="gold-text"><?= htmlspecialchars(number_format((float)($row['total_price'] ?? 0), 2)) ?> USD</strong></div>
             <div><span><?= htmlspecialchars(t('admin.user_id', 'User ID')) ?></span><strong><?= htmlspecialchars($row['user_id'] ?? '—') ?></strong></div>
+            <?php if ($type === 'hotel'): ?>
+              <div><span><?= htmlspecialchars(t('hotel.rooms_booked', 'Rooms Booked')) ?></span><strong><?= (int)($row['rooms_count'] ?? 1) ?></strong></div>
+              <div><span><?= htmlspecialchars(t('hotel.guests_label', 'Guests')) ?></span><strong><?= (int)($row['guests'] ?? 1) ?></strong></div>
+            <?php endif; ?>
           </div>
         </div>
 

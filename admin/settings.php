@@ -11,7 +11,7 @@
  * ------------------------------------------------------------
  */
 require_once __DIR__ . '/_bootstrap.php';
-require_admin();
+require_super_admin();
 
 $pdo = getPDO();
 
@@ -24,7 +24,7 @@ $groups = [
         'contact_email', 'contact_phone', 'contact_whatsapp', 'contact_whatsapp_display', 'contact_address', 'contact_hours', 'google_maps',
     ],
     'general' => [
-        'currency', 'currency_symbol', 'default_language', 'default_dir', 'site_locales', 'seo_brand_suffix', 'timezone',
+        'currency', 'currency_symbol', 'default_language', 'default_dir', 'site_locales', 'seo_brand_suffix', 'timezone', 'payment_gateway_fee_percent',
     ],
     'social' => [
         'social_facebook', 'social_instagram', 'social_twitter', 'social_youtube', 'social_tiktok', 'social_linkedin',
@@ -34,6 +34,10 @@ $groups = [
     ],
     'seo' => [
         'seo_brand_suffix', 'seo_meta_title', 'seo_meta_description', 'seo_meta_keywords', 'seo_og_image', 'seo_twitter_image', 'seo_canonical_url',
+    ],
+    'email' => [
+        'mail_driver', 'mail_from_name', 'mail_from_email',
+        'smtp_host', 'smtp_port', 'smtp_encryption', 'smtp_username', 'smtp_password',
     ],
 ];
 
@@ -69,8 +73,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $val = $up;
                 }
             }
-            $upd->execute([$val, $k]);
-            if ($upd->rowCount() === 0) {
+            // SMTP password: keep existing if field left blank
+            if ($k === 'smtp_password' && $val === '') {
+                continue;
+            }
+            if (array_key_exists($k, $current)) {
+                $upd->execute([$val, $k]);
+            } else {
                 $type = in_array($k, ['company_about', 'footer_about'], true) ? 'textarea' : 'text';
                 $grp  = $group;
                 $ins->execute([$k, $val, $type, $grp]);
@@ -173,6 +182,7 @@ $admin_active       = 'settings';
                   <?php endforeach; ?>
               </select>
             </div>
+            <div class="field"><label><?= htmlspecialchars(t('admin.payment_gateway_fee', 'Payment Gateway Fee (%)')) ?></label><input type="number" step="0.01" name="payment_gateway_fee_percent" value="<?= htmlspecialchars($current['payment_gateway_fee_percent'] ?? '2.5') ?>"></div>
 
           <?php elseif ($activeGroup === 'social'): ?>
             <div class="grid-2">
@@ -211,6 +221,83 @@ $admin_active       = 'settings';
               <div class="field"><label><?= htmlspecialchars(t('admin.twitter_image')) ?></label><input type="text" name="seo_twitter_image" value="<?= htmlspecialchars($current['seo_twitter_image'] ?? '') ?>" placeholder="https://.../twitter-card.jpg"></div>
             </div>
             <div class="field"><label><?= htmlspecialchars(t('admin.canonical_url')) ?></label><input type="text" name="seo_canonical_url" value="<?= htmlspecialchars($current['seo_canonical_url'] ?? '') ?>" placeholder="https://example.com/"></div>
+          <?php elseif ($activeGroup === 'email'): ?>
+
+            <!-- ── Mail Driver ─────────────────────────── -->
+            <h3 style="margin:0 0 18px;font-size:16px;">Mail Driver</h3>
+            <div class="grid-2">
+              <div class="field">
+                <label><?= htmlspecialchars(t('admin.mail_driver', 'Mail Driver')) ?></label>
+                <select name="mail_driver" id="mailDriverSelect">
+                  <option value="php_mail" <?= ($current['mail_driver'] ?? 'php_mail') === 'php_mail' ? 'selected' : '' ?>>PHP mail() — use server sendmail</option>
+                  <option value="smtp"     <?= ($current['mail_driver'] ?? '') === 'smtp' ? 'selected' : '' ?>>SMTP — custom server</option>
+                </select>
+                <div class="hint">Choose <em>PHP mail()</em> if your server already has sendmail configured, or <em>SMTP</em> to specify your own mail server (e.g. Gmail, Mailgun, SendGrid).</div>
+              </div>
+              <div class="field">
+                <label><?= htmlspecialchars(t('admin.mail_from_name', 'From Name')) ?></label>
+                <input type="text" name="mail_from_name" value="<?= htmlspecialchars($current['mail_from_name'] ?? site_setting('company_name', 'GAIA TOURS')) ?>">
+              </div>
+            </div>
+            <div class="field">
+              <label><?= htmlspecialchars(t('admin.mail_from_email', 'From Email Address')) ?></label>
+              <input type="email" name="mail_from_email" value="<?= htmlspecialchars($current['mail_from_email'] ?? site_setting('contact_email', '')) ?>">
+            </div>
+
+            <!-- ── SMTP Settings (shown only when smtp selected) ── -->
+            <div id="smtpFields" style="<?= ($current['mail_driver'] ?? 'php_mail') === 'smtp' ? '' : 'display:none' ?>">
+              <hr style="margin:24px 0;border:none;border-top:1px solid var(--line);">
+              <h3 style="margin:0 0 18px;font-size:16px;"><i class="fa-solid fa-server" style="margin-right:6px;color:var(--gaia-accent);"></i>SMTP Configuration</h3>
+
+              <div class="grid-2">
+                <div class="field">
+                  <label><?= htmlspecialchars(t('admin.smtp_host', 'SMTP Host')) ?></label>
+                  <input type="text" name="smtp_host" value="<?= htmlspecialchars($current['smtp_host'] ?? '') ?>" placeholder="smtp.gmail.com">
+                </div>
+                <div class="field">
+                  <label><?= htmlspecialchars(t('admin.smtp_port', 'SMTP Port')) ?></label>
+                  <input type="number" name="smtp_port" value="<?= htmlspecialchars($current['smtp_port'] ?? '587') ?>" placeholder="587">
+                </div>
+              </div>
+
+              <div class="grid-2">
+                <div class="field">
+                  <label><?= htmlspecialchars(t('admin.smtp_encryption', 'Encryption')) ?></label>
+                  <select name="smtp_encryption">
+                    <option value="tls"  <?= ($current['smtp_encryption'] ?? 'tls') === 'tls'  ? 'selected' : '' ?>>TLS (STARTTLS) — port 587</option>
+                    <option value="ssl"  <?= ($current['smtp_encryption'] ?? '') === 'ssl'  ? 'selected' : '' ?>>SSL — port 465</option>
+                    <option value="none" <?= ($current['smtp_encryption'] ?? '') === 'none' ? 'selected' : '' ?>>None — port 25</option>
+                  </select>
+                </div>
+                <div class="field">
+                  <label><?= htmlspecialchars(t('admin.smtp_username', 'SMTP Username')) ?></label>
+                  <input type="text" name="smtp_username" value="<?= htmlspecialchars($current['smtp_username'] ?? '') ?>" placeholder="you@gmail.com">
+                </div>
+              </div>
+
+              <div class="field">
+                <label><?= htmlspecialchars(t('admin.smtp_password', 'SMTP Password / App Password')) ?></label>
+                <input type="password" name="smtp_password" value="<?= htmlspecialchars($current['smtp_password'] ?? '') ?>" autocomplete="new-password" placeholder="Leave blank to keep existing password">
+                <div class="hint">For Gmail, use an <strong>App Password</strong> (not your account password). For Mailgun/SendGrid use your API SMTP credentials.</div>
+              </div>
+
+              <div style="background:var(--gaia-warm,#f4efe6);border-radius:10px;padding:14px 18px;font-size:13px;margin-top:8px;">
+                <strong>Common presets:</strong>
+                <ul style="margin:8px 0 0;padding-left:18px;line-height:1.9;">
+                  <li><strong>Gmail:</strong> smtp.gmail.com · Port 587 · TLS</li>
+                  <li><strong>Mailgun:</strong> smtp.mailgun.org · Port 587 · TLS</li>
+                  <li><strong>SendGrid:</strong> smtp.sendgrid.net · Port 587 · TLS · user: apikey</li>
+                  <li><strong>Amazon SES:</strong> email-smtp.us-east-1.amazonaws.com · Port 587 · TLS</li>
+                </ul>
+              </div>
+            </div>
+
+            <script>
+              document.getElementById('mailDriverSelect').addEventListener('change', function() {
+                document.getElementById('smtpFields').style.display = this.value === 'smtp' ? '' : 'none';
+              });
+            </script>
+
           <?php endif; ?>
 
           <div class="form-actions">

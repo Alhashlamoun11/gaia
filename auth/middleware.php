@@ -139,10 +139,10 @@ if (!function_exists('redirect_if_guest_or_else')) {
             return;
         }
         $role = Auth::role();
-        if ($role === 'super_admin') {
-            redirect_to('index.php');
+        if ($role === 'super_admin' || $role === 'admin') {
+            redirect_to('admin/index.php');
         } elseif ($role === 'hotel_manager') {
-            redirect_to('index.php');
+            redirect_to('hotel/index.php');
         }
         redirect_to('account/index.php');
     }

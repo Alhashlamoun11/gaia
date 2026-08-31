@@ -75,10 +75,10 @@ $admin_active = 'faq';
         <div class="table-wrap">
           <table>
             <thead><tr>
-              <th><?= htmlspecialchars(AdminQuery::sortLink('category', t('admin.category'), ['id','category','question','sort_order'], 'sort_order')) ?></th>
-              <th><?= htmlspecialchars(AdminQuery::sortLink('question', t('admin.question','Question'), ['id','category','question','sort_order'], 'sort_order')) ?></th>
+              <th><?= AdminQuery::sortLink('category', t('admin.category'), ['id','category','question','sort_order'], 'sort_order') ?></th>
+              <th><?= AdminQuery::sortLink('question', t('admin.question','Question'), ['id','category','question','sort_order'], 'sort_order') ?></th>
               <th><?= htmlspecialchars(t('admin.answer','Answer')) ?></th>
-              <th><?= htmlspecialchars(AdminQuery::sortLink('sort_order', t('admin.sort_order'), ['id','category','question','sort_order'], 'sort_order')) ?></th>
+              <th><?= AdminQuery::sortLink('sort_order', t('admin.sort_order'), ['id','category','question','sort_order'], 'sort_order') ?></th>
               <th><?= htmlspecialchars(t('admin.status')) ?></th>
               <th><?= htmlspecialchars(t('admin.actions')) ?></th>
             </tr></thead>

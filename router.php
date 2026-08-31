@@ -56,6 +56,9 @@ function rewrite($path, $query)
     }
     if (preg_match('#^/(en|ar)/tours$#', $p, $m)) {
         $query['lang'] = $m[1];
+        if (!empty($query['slug'])) {
+            return ['tour.php', $query];
+        }
         return ['weroad/search.php', $query];
     }
     if (preg_match('#^/(en|ar)/destinations$#', $p, $m)) {
@@ -77,6 +80,20 @@ function rewrite($path, $query)
     }
     if (preg_match('#^/(en|ar)/hotels$#', $p, $m)) {
         $query['lang'] = $m[1];
+        if (!empty($query['slug'])) {
+            return ['hotel.php', $query];
+        }
+        return ['index.php', $query];
+    }
+    if (preg_match('#^/(en|ar)/search-hotels$#', $p, $m)) {
+        $query['lang'] = $m[1];
+        return ['search-hotels.php', $query];
+    }
+    if (preg_match('#^/(en|ar)/rooms$#', $p, $m)) {
+        $query['lang'] = $m[1];
+        if (!empty($query['id'])) {
+            return ['room.php', $query];
+        }
         return ['index.php', $query];
     }
     if (preg_match('#^/(en|ar)/transfers$#', $p, $m)) {
@@ -139,6 +156,9 @@ if (preg_match('#^/(en|ar)/account/(dashboard|bookings|payments|invoices|profile
 
 // --- Non-prefixed clean routes (defaults to English) ---
     if ($p === '/tours') {
+        if (!empty($query['slug'])) {
+            return ['tour.php', $query];
+        }
         return ['weroad/search.php', $query];
     }
     if (preg_match('#^/tours/(.+)$#', $p, $m)) {
@@ -200,11 +220,19 @@ if (preg_match('#^/(en|ar)/account/(dashboard|bookings|payments|invoices|profile
     if ($p === '/account') {
         return ['account/index.php', $query];
     }
-    // Anchor sections that live on the platform home page
-    if ($p === '/reviews' || $p === '/hotels') {
+    if ($p === '/reviews' || $p === '/hotels' || $p === '/rooms') {
+        if ($p === '/hotels' && !empty($query['slug'])) {
+            return ['hotel.php', $query];
+        }
+        if ($p === '/rooms' && !empty($query['id'])) {
+            return ['room.php', $query];
+        }
         return ['index.php', $query];
     }
-// Anchor section that lives on the GAIA Night page
+    if ($p === '/search-hotels') {
+        return ['search-hotels.php', $query];
+    }
+    // Anchor section that lives on the GAIA Night page
     if ($p === '/events') {
         return ['gaia-night.php', $query];
     }
@@ -227,6 +255,7 @@ if ($target !== false) {
     list($script, $query) = $target;
     // Merge rewritten query params into $_GET
     $_GET = array_merge($_GET, $query);
+    $_SERVER['SCRIPT_NAME'] = '/' . ltrim($script, '/');
     $file = __DIR__ . '/' . $script;
     if (file_exists($file)) {
         require $file;

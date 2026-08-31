@@ -11,6 +11,7 @@
  * ------------------------------------------------------------
  */
 require_once __DIR__ . '/components/gaia-config.php';
+require_once __DIR__ . '/services/HotelAvailabilityService.php';
 
 $gaia_base          = '';
 $gaia_active        = 'hotels';
@@ -66,12 +67,31 @@ if (!$room) {
         $hstmt = $pdo->prepare("SELECT * FROM hotels WHERE id = :id AND is_active = 1 LIMIT 1");
         $hstmt->execute([':id' => (int)$room['hotel_id']]);
         $hotel = $hstmt->fetch() ?: null;
+        // Ensure admin commission is available (decimal percent)
+        $adminCommission = (float) ($hotel['admin_commission_percent'] ?? 0);
+        // We'll use these values later for price calculations.
     }
 
     // Related rooms (same hotel, excluding current)
     $rstmt = $pdo->prepare("SELECT * FROM hotel_rooms WHERE hotel_id = :hid AND id != :rid AND is_active = 1 ORDER BY price LIMIT 3");
     $rstmt->execute([':hid' => (int)$room['hotel_id'], ':rid' => $roomId]);
     $relatedRooms = $rstmt->fetchAll();
+
+    // Validate search context
+    $searchCtx = HotelAvailabilityService::validateSearchContext($_GET);
+    $hasSearchCtx = $searchCtx !== null;
+    $avail = null;
+    $isSoldOut = false;
+    if ($hasSearchCtx) {
+        $avail = HotelAvailabilityService::availableInventory(
+            $pdo,
+            $roomId,
+            (int)$room['quantity'],
+            $searchCtx['check_in'],
+            $searchCtx['check_out']
+        );
+        $isSoldOut = ($avail < $searchCtx['rooms']);
+    }
 }
 
 // Dynamic SEO
@@ -87,6 +107,9 @@ if (!$is404) {
 
 $currency = site_setting('currency_symbol', '$');
 $whatsapp = htmlspecialchars(site_setting('contact_whatsapp', '962790123456'));
+$paymentGatewayFeePercent = (float) site_setting('payment_gateway_fee_percent', '2.5');// Prepare final price calculation variables
+$adminCommission = (float) ($hotel['admin_commission_percent'] ?? 0);
+$gatewayFee = $paymentGatewayFeePercent;
 ?>
 <!DOCTYPE html>
 <html lang="<?= htmlspecialchars(gaia_current_lang()) ?>" dir="<?= gaia_dir() ?>">
@@ -212,16 +235,22 @@ $whatsapp = htmlspecialchars(site_setting('contact_whatsapp', '962790123456'));
         <a href="<?= gaia_url('index.php') ?>"><?= t('detail.home', 'Home') ?></a>
         <span class="sep">/</span>
         <?php if ($hotel): ?>
-          <a href="<?= gaia_url('hotel.php') ?>?slug=<?= urlencode($hotel['slug']) ?>"><?= htmlspecialchars(lang_value($hotel, 'name')) ?></a>
+          <?php 
+            $hotelUrl = gaia_url('hotel.php') . '?slug=' . urlencode($hotel['slug']);
+            if ($hasSearchCtx) {
+                $hotelUrl .= '&' . HotelAvailabilityService::searchContextQuery($searchCtx);
+            }
+          ?>
+          <a href="<?= htmlspecialchars($hotelUrl) ?>"><?= htmlspecialchars(lang_value($hotel, 'name')) ?></a>
         <?php else: ?>
-          <a href="<?= gaia_url('index.php') ?>"><?= t('detail.hotels', 'Hotels') ?></a>
+          <a href="<?= gaia_url('search-hotels.php') ?>"><?= t('detail.hotels', 'Hotels') ?></a>
         <?php endif; ?>
         <span class="sep">/</span>
         <span><?= htmlspecialchars($roomName) ?></span>
       </nav>
       <h1><?= htmlspecialchars($roomName) ?></h1>
       <span class="hero-price">
-        <span class="amount"><?= $currency ?><?= number_format((float)$room['price'], 0) ?></span>
+        <span class="amount"><?= $currency ?><?= number_format((float)($room['price'] * (1 + $adminCommission/100) * (1 + $gatewayFee/100)), 0) ?></span>
         <span class="per"><?= t('room.per_night', '/ night') ?></span>
       </span>
     </div>
@@ -301,7 +330,7 @@ $whatsapp = htmlspecialchars(site_setting('contact_whatsapp', '962790123456'));
               <div class="media"><img src="<?= htmlspecialchars($rr['image_url']) ?>" alt="<?= htmlspecialchars(lang_value($rr, 'name')) ?>" loading="lazy"></div>
               <div class="body">
                 <h3><?= htmlspecialchars(lang_value($rr, 'name')) ?></h3>
-                <span class="price"><?= $currency ?><?= number_format((float)$rr['price'], 0) ?> <small style="color:var(--muted);font-weight:400;">/ <?= t('room.per_night', 'night') ?></small></span>
+                <span class="price"><?= $currency ?><?= number_format((float)$rr['price'] * (1 + $adminCommission/100) * (1 + $gatewayFee/100), 0) ?> <small style="color:var(--muted);font-weight:400;"><?= t('room.per_night', '/ night') ?></small></span>
               </div>
             </a>
             <?php endforeach; ?>
@@ -315,9 +344,24 @@ $whatsapp = htmlspecialchars(site_setting('contact_whatsapp', '962790123456'));
       <aside class="sidebar">
         <div class="book-card">
           <div class="from"><?= t('tour.from', 'From') ?></div>
-          <div class="amount"><?= $currency ?><?= number_format((float)$room['price'], 0) ?> <span class="per"><?= t('room.per_night', '/ night') ?></span></div>
+          <div class="amount"><?= $currency ?><?= number_format((float)($room['price'] * (1 + $adminCommission/100) * (1 + $gatewayFee/100)), 0) ?> <span class="per"><?= t('room.per_night', '/ night') ?></span></div>
           <div class="cta">
-            <a class="gaia-btn" href="<?= gaia_url('contact') ?>"><?= t('room.book', 'Book Room') ?></a>
+            <?php if ($hasSearchCtx): ?>
+              <?php if ($isSoldOut): ?>
+                <div class="availability-badge sold-out" style="background:#fdecea; color:#b3261e; border:1px solid #f5c6c2; padding:10px; border-radius:8px; text-align:center; font-weight:600; margin-bottom:10px;">
+                  <?= htmlspecialchars(t('hotel.sold_out_dates', 'Sold out for your selected dates')) ?>
+                </div>
+                <button class="gaia-btn" disabled style="opacity:0.5; cursor:not-allowed;"><?= t('room.book', 'Book Room') ?></button>
+              <?php else: ?>
+                <div class="availability-badge available" style="background:#e8f5e9; color:#2e7d32; border:1px solid #c8e6c9; padding:10px; border-radius:8px; text-align:center; font-weight:600; margin-bottom:10px;">
+                  <?= $avail ?> <?= htmlspecialchars(t('hotel.rooms_available', 'Rooms Available')) ?>
+                </div>
+                <?php $bookUrl = gaia_url('checkout-hotel.php') . '?room_id=' . $roomId . '&' . HotelAvailabilityService::searchContextQuery($searchCtx); ?>
+                <a class="gaia-btn" href="<?= htmlspecialchars($bookUrl) ?>"><?= t('room.book', 'Book Room') ?></a>
+              <?php endif; ?>
+            <?php else: ?>
+              <a class="gaia-btn" href="<?= gaia_url('checkout-hotel.php') ?>?room_id=<?= (int)$room['id'] ?>"><?= t('room.book', 'Book Room') ?></a>
+            <?php endif; ?>
             <a class="gaia-btn gaia-btn-ghost" href="https://wa.me/<?= $whatsapp ?>" target="_blank" rel="noopener"><?= t('room.contact', 'Contact Us') ?></a>
           </div>
         </div>

@@ -50,6 +50,8 @@ RewriteRule ^(en|ar)/destinations/?$ weroad/search.php?lang=$1&destinations=1 [Q
 
 # --- Hotels (existing platform home page) ---
 RewriteRule ^(en|ar)/hotels/?$ index.php?lang=$1 [QSA,L]
+RewriteRule ^(en|ar)/search-hotels/?$ search-hotels.php?lang=$1 [QSA,L]
+RewriteRule ^search-hotels/?$ search-hotels.php [QSA,L]
 
 # --- Transfers / transfer booking ---
 RewriteRule ^(en|ar)/transfers/?$ route.php?lang=$1 [QSA,L]

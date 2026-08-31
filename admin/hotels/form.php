@@ -21,9 +21,10 @@ if ($editing && !$row) {
 
 $alerts = []; $errors = [];
 $old = $row ?: [
-    'name'=>'','slug'=>'','city'=>'','country'=>'','star_rating'=>3,'price_from'=>0,
+    'name'=>'', 'slug'=>'', 'city'=>'', 'country'=>'', 'star_rating'=>3,'price_from'=>0,
+    'admin_commission_percent'=>0,
     'description'=>'','image_url'=>'','gallery_urls'=>'','featured'=>0,'is_active'=>1,
-    'seo_title'=>'','seo_description'=>'',
+    'seo_title'=>'','seo_description'=>''
 ];
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -36,6 +37,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         'country' => trim($_POST['country'] ?? ''),
         'star_rating' => max(1, min(5, (int)($_POST['star_rating'] ?? 3))),
         'price_from' => (float)($_POST['price_from'] ?? 0),
+        'admin_commission_percent' => (float)($_POST['admin_commission_percent'] ?? 0),
         'description' => trim($_POST['description'] ?? ''),
         'featured' => !empty($_POST['featured']) ? 1 : 0,
         'is_active' => !empty($_POST['is_active']) ? 1 : 0,
@@ -107,7 +109,8 @@ $admin_active = 'hotels';
                 <?php for ($i=1;$i<=5;$i++): ?><option value="<?=$i?>" <?= (int)$old['star_rating']===$i?'selected':'' ?>><?=$i?> ★</option><?php endfor; ?>
               </select>
             </div>
-            <div class="field"><label><?= htmlspecialchars(t('admin.price_from','Price From')) ?></label><input type="number" step="0.01" name="price_from" value="<?= htmlspecialchars($old['price_from']) ?>"></div>
+            <div class="field"><label><?= htmlspecialchars(t('admin.price','Price')) ?></label><input type="number" step="0.01" name="price_from" value="<?= htmlspecialchars($old['price_from']) ?>" /></div>
+            <div class="field"><label><?= htmlspecialchars(t('admin.admin_commission','Admin Commission (%)')) ?></label><input type="number" step="0.01" name="admin_commission_percent" value="<?= htmlspecialchars($old['admin_commission_percent']) ?>" /></div>
             <div class="field"><label><?= htmlspecialchars(t('admin.featured')) ?></label><input type="checkbox" name="featured" value="1" <?= (int)$old['featured']?'checked':'' ?>></div>
           </div>
           <div class="field"><label><?= htmlspecialchars(t('admin.description')) ?></label><textarea name="description" rows="4"><?= htmlspecialchars($old['description']) ?></textarea></div>

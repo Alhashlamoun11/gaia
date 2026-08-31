@@ -21,12 +21,11 @@ if (!$hotel) {
 }
 
 $tab = $_GET['tab'] ?? 'facilities';
-$tabs = ['facilities','offers','amenities'];
+$tabs = ['facilities','offers'];
 if (!in_array($tab, $tabs, true)) $tab = 'facilities';
 $tableMap = [
     'facilities'=>'hotel_facilities',
     'offers'=>'hotel_offers',
-    'amenities'=>'hotel_amenities',
 ];
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -77,6 +76,7 @@ $C = fn($v)=>htmlspecialchars((string)($v ?? ''));
             <a class="tab <?= $tab===$tk?'active':'' ?>" href="detail.php?id=<?= (int)$hotelId ?>&tab=<?= $tk ?>"><?= $C(t('admin.hotel_'.$tk, ucfirst($tk))) ?></a>
           <?php endforeach; ?>
           <a class="btn btn-sm" style="margin-left:auto;" href="form-detail.php?hotel_id=<?= (int)$hotelId ?>&tab=<?= $C($tab) ?>"><?= $C(t('admin.add_new')) ?></a>
+            <a class="btn btn-sm" href="policy.php?id=<?= (int)$hotelId ?>" style="margin-left:8px;">Cancellation Policy</a>
         </div>
 
         <div class="table-wrap" style="margin-top:14px;">

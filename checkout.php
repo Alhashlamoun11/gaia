@@ -364,6 +364,33 @@ if (!code) { msg.className = 'promo-msg err'; msg.textContent = MSG_PROMO_ENTER;
 .catch(() => { msg.className = 'promo-msg err'; msg.textContent = MSG_PROMO_ERROR; });
   });
 
+  document.getElementById('bookingForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const btn = this.querySelector('button[type="submit"]');
+    btn.disabled = true;
+    btn.textContent = 'Processing...';
+    
+    fetch(this.action, {
+      method: 'POST',
+      body: new FormData(this)
+    })
+    .then(r => r.json())
+    .then(data => {
+      if (data.success) {
+        window.location.href = '<?= gaia_url("account/booking.php") ?>?reference=' + data.booking_reference;
+      } else {
+        alert(data.message);
+        btn.disabled = false;
+        btn.textContent = '<?= t('checkout.continue', 'Continue') ?>';
+      }
+    })
+    .catch(err => {
+      alert('An error occurred.');
+      btn.disabled = false;
+      btn.textContent = '<?= t('checkout.continue', 'Continue') ?>';
+    });
+  });
+
   updateSummary();
 </script>
 <?php endif; ?>

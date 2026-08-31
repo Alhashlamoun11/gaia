@@ -17,11 +17,81 @@ require_once __DIR__ . '/../auth/Auth.php';
 require_once __DIR__ . '/../auth/middleware.php';
 
 // ------------------------------------------------------------
-// SECURITY: Only authenticated customers may reach the tour
-// booking form. Guests are redirected to login and returned
-// afterwards (return-to-page support).
+// DISABLING TOUR BOOKINGS TEMPORARILY
 // ------------------------------------------------------------
-require_booking_login('../weroad/booking.php');
+$lang = gaia_current_lang();
+$msg = ($lang === 'ar') ? 'سيتم توفير هذه الميزة قريباً' : 'This feature will be available soon';
+$sub = ($lang === 'ar') ? 'يجري العمل على إعداد ميزات حجز الرحلات السياحية، سنطلقها قريباً.' : 'We are currently setting up tour booking features and will launch soon.';
+$btnText = ($lang === 'ar') ? 'العودة للرئيسية' : 'Back to Home';
+$homeUrl = gaia_url('index.php', '../');
+
+echo '<!DOCTYPE html>
+<html lang="' . htmlspecialchars($lang) . '" dir="' . ($lang === 'ar' ? 'rtl' : 'ltr') . '">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>' . htmlspecialchars($msg) . '</title>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Inter:wght@400;600&family=Cairo:wght@600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #14161d;
+            color: #ffffff;
+            font-family: ' . ($lang === 'ar' ? "'Cairo', sans-serif" : "'Inter', sans-serif") . ';
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            text-align: center;
+        }
+        .container {
+            max-width: 600px;
+            padding: 40px 24px;
+        }
+        .icon {
+            font-size: 64px;
+            margin-bottom: 24px;
+            color: #c9a227;
+        }
+        h1 {
+            font-family: ' . ($lang === 'ar' ? "'Cairo'" : "'Playfair Display'") . ', serif;
+            font-size: 32px;
+            margin: 0 0 16px 0;
+            color: #ffffff;
+        }
+        p {
+            font-size: 16px;
+            color: #a0a5b5;
+            margin: 0 0 32px 0;
+            line-height: 1.6;
+        }
+        .btn {
+            display: inline-block;
+            background: linear-gradient(125deg, #c9a227, #e5be4f);
+            color: #14161d;
+            text-decoration: none;
+            padding: 14px 28px;
+            border-radius: 30px;
+            font-weight: 600;
+            transition: opacity 0.2s;
+        }
+        .btn:hover {
+            opacity: 0.9;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="icon">⏳</div>
+        <h1>' . htmlspecialchars($msg) . '</h1>
+        <p>' . htmlspecialchars($sub) . '</p>
+        <a href="' . htmlspecialchars($homeUrl) . '" class="btn">' . htmlspecialchars($btnText) . '</a>
+    </div>
+</body>
+</html>';
+exit;
+
 
 // Pre-fill contact fields from the authenticated account.
 $authUser = auth_user();

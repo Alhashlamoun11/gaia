@@ -68,6 +68,9 @@ $amount   = (float)($summary['amount'] ?? 0);
     <div class="list-item"><span class="label"><?= htmlspecialchars(t('account.service_name', 'Service')) ?></span><span class="value"><?= htmlspecialchars($summary['service_name'] ?? '') ?></span></div>
     <div class="list-item"><span class="label"><?= htmlspecialchars(t('account.booking_date', 'Booking date')) ?></span><span class="value"><?= htmlspecialchars($summary['created_date'] ?? '') ?></span></div>
     <div class="list-item"><span class="label"><?= htmlspecialchars(t('account.customer', 'Customer')) ?></span><span class="value"><?= htmlspecialchars($summary['customer'] ?? '') ?></span></div>
+    <?php if (isset($summary['admin_commission_percent']) && $summary['admin_commission_percent'] > 0): ?>
+      <div class="list-item"><span class="label"><?= htmlspecialchars(t('admin.admin_commission', 'Admin Commission')) ?></span><span class="value"><?= htmlspecialchars($summary['admin_commission_percent']) ?>%</span></div>
+    <?php endif; ?>
     <div class="list-item total"><span class="label"><?= htmlspecialchars(t('account.amount', 'Amount')) ?></span><span class="value"><?= htmlspecialchars(number_format($amount, 2)) ?> <?= htmlspecialchars($currency) ?></span></div>
   </div>
 
