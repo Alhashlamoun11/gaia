@@ -8,12 +8,12 @@ require_admin();
 
 $pdo = getPDO();
 
-$tabs = ['banners','highlights','trust_scores','awards','night_offerings','social_links'];
+$tabs = ['banners','highlights','pickup_locations','trust_scores','awards','night_offerings','social_links'];
 $tab = $_GET['tab'] ?? 'banners';
 if (!in_array($tab, $tabs, true)) $tab = 'banners';
 
 $tableMap = [
-    'banners'=>'banners','highlights'=>'highlights','trust_scores'=>'trust_scores',
+    'banners'=>'banners','highlights'=>'highlights','pickup_locations'=>'pickup_locations','trust_scores'=>'trust_scores',
     'awards'=>'awards','night_offerings'=>'night_offerings','social_links'=>'social_links',
 ];
 $table = $tableMap[$tab];
@@ -35,6 +35,7 @@ $errors = []; $alerts = [];
 $defs = [
     'banners'=>['page'=>'home','title'=>'','subtitle'=>'','cta_label'=>'','cta_url'=>'','image_url'=>'','stats_json'=>'','sort_order'=>0,'is_active'=>1],
     'highlights'=>['section'=>'expect','title'=>'','description'=>'','icon'=>'','image_url'=>'','sort_order'=>0,'is_active'=>1],
+    'pickup_locations'=>['name'=>'','sort_order'=>0,'is_active'=>1],
     'trust_scores'=>['icon'=>'','score'=>'','label'=>'','color'=>'#1f6f8f','sort_order'=>0,'is_active'=>1],
     'awards'=>['title'=>'','icon'=>'','sort_order'=>0,'is_active'=>1],
     'night_offerings'=>['type'=>'card','title'=>'','description'=>'','badge'=>'','price_label'=>'','price_value'=>0,'per_label'=>'','image_url'=>'','sort_order'=>0,'is_active'=>1],
@@ -69,6 +70,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 'is_active'=>!empty($_POST['is_active'])?1:0,
             ];
             if ($data['title']==='') $errors[]=t('admin.title_req','Title is required.');
+            break;
+        case 'pickup_locations':
+            $data = [
+                'name'=>trim($_POST['name']??''),
+                'sort_order'=>(int)($_POST['sort_order']??0),
+                'is_active'=>!empty($_POST['is_active'])?1:0,
+            ];
+            if ($data['name']==='') $errors[]=t('admin.name_req','Name is required.');
             break;
         case 'trust_scores':
             $data = [
@@ -182,6 +191,9 @@ $C = fn($v)=>htmlspecialchars((string)($v ?? ''));
             </div>
             <div class="field"><label><?= $C(t('admin.title')) ?></label><input type="text" name="title" value="<?= $C($old['title']) ?>"></div>
             <div class="field"><label><?= $C(t('admin.description')) ?></label><textarea name="description" rows="3"><?= $C($old['description']) ?></textarea></div>
+          <?php elseif ($tab === 'pickup_locations'): ?>
+            <div class="field"><label><?= $C(t('admin.name','Location Name')) ?></label><input type="text" name="name" value="<?= $C($old['name']) ?>" placeholder="Queen Alia Airport"></div>
+
           <?php elseif ($tab === 'trust_scores'): ?>
             <div class="grid-2">
               <div class="field"><label><?= $C(t('admin.icon')) ?></label><input type="text" name="icon" value="<?= $C($old['icon']) ?>"></div>

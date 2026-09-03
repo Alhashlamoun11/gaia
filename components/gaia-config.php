@@ -56,7 +56,7 @@ function gaia_footer_columns($base = '')
     $parents = [];
     $children = [];
     foreach ($all as $row) {
-        if ((int)$row['menu'] !== 'footer' || (int)$row['is_active'] !== 1) {
+        if ($row['menu'] !== 'footer' || (int)$row['is_active'] !== 1) {
             continue;
         }
         if ((int)$row['parent_id'] === 0) {
@@ -71,7 +71,6 @@ function gaia_footer_columns($base = '')
         if (isset($children[$pid])) {
             usort($children[$pid], fn($a, $b) => (int)$a['sort_order'] <=> (int)$b['sort_order']);
             foreach ($children[$pid] as $child) {
-                // Translate footer link label if a nav_key exists
                 $label = $child['label'];
                 if (!empty($child['nav_key']) && t('nav.' . $child['nav_key']) !== 'nav.' . $child['nav_key']) {
                     $label = t('nav.' . $child['nav_key']);
@@ -79,7 +78,6 @@ function gaia_footer_columns($base = '')
                 $links[] = ['label' => $label, 'url' => $base . $child['url']];
             }
         }
-        // Translate footer column title if a nav_key exists
         $title = $parent['label'];
         if (!empty($parent['nav_key']) && t('nav.' . $parent['nav_key']) !== 'nav.' . $parent['nav_key']) {
             $title = t('nav.' . $parent['nav_key']);

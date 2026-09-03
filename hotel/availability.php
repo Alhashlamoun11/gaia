@@ -16,7 +16,7 @@ $month = isset($_GET['m']) ? (int)$_GET['m'] : (int)date('m');
 $year = isset($_GET['y']) ? (int)$_GET['y'] : (int)date('Y');
 if ($month < 1 || $month > 12) $month = (int)date('m');
 
-$daysInMonth = cal_days_in_month(CAL_GREGORIAN, $month, $year);
+$daysInMonth = (int)date('t', mktime(0, 0, 0, $month, 1, $year));
 
 $startDate = sprintf('%04d-%02d-01', $year, $month);
 $endDate = sprintf('%04d-%02d-%02d', $year, $month, $daysInMonth);
@@ -34,29 +34,33 @@ require __DIR__ . '/components/header.php';
     <div class="admin-content">
       <?php require __DIR__ . '/components/alert.php'; ?>
 
-      <div class="toolbar">
+      <div class="toolbar" style="justify-content:space-between;">
         <h2><?= htmlspecialchars(t('hotel.availability', 'Room Availability')) ?></h2>
-        <div class="spacer" style="flex:1;"></div>
-        <div style="display:flex; gap:8px; align-items:center;">
+        
+        <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
           <?php
             $prevM = $month - 1; $prevY = $year; if($prevM < 1) { $prevM = 12; $prevY--; }
             $nextM = $month + 1; $nextY = $year; if($nextM > 12) { $nextM = 1; $nextY++; }
           ?>
-          <a href="?m=<?= $prevM ?>&y=<?= $prevY ?>" class="btn btn-ghost btn-sm"><i class="fa-solid fa-chevron-left"></i> <?= htmlspecialchars(t('admin.prev', 'Prev Month')) ?></a>
-          <span style="font-weight:700; font-size:14px; padding:0 12px;"><?= date('F Y', strtotime($startDate)) ?></span>
-          <a href="?m=<?= $nextM ?>&y=<?= $nextY ?>" class="btn btn-ghost btn-sm"><?= htmlspecialchars(t('admin.next', 'Next Month')) ?> <i class="fa-solid fa-chevron-right"></i></a>
+          <a href="?m=<?= $prevM ?>&y=<?= $prevY ?>" class="btn btn-ghost btn-sm"><i class="fa-solid fa-chevron-left"></i> <?= htmlspecialchars(t('admin.prev', 'Prev')) ?></a>
+          <span style="font-weight:700; font-size:14px; padding:0 8px; white-space:nowrap;"><?= date('F Y', strtotime($startDate)) ?></span>
+          <a href="?m=<?= $nextM ?>&y=<?= $nextY ?>" class="btn btn-ghost btn-sm"><?= htmlspecialchars(t('admin.next', 'Next')) ?> <i class="fa-solid fa-chevron-right"></i></a>
         </div>
       </div>
 
-      <div class="card" style="padding:0;">
+      <div style="font-size:12px; color:var(--muted); margin-bottom:10px; display:flex; align-items:center; gap:6px;">
+        <i class="fa-solid fa-arrows-left-right"></i> Swipe or scroll horizontally to inspect daily occupancy.
+      </div>
+
+      <div class="card" style="padding:0; overflow:hidden;">
         <div class="table-wrap" style="max-height: 70vh; overflow:auto;">
           <table style="min-width: 1200px;">
             <thead style="position:sticky; top:0; background:#fff; z-index:10;">
               <tr>
-                <th style="min-width: 200px;"><?= htmlspecialchars(t('hotel.rooms', 'Room')) ?></th>
-                <th style="min-width: 60px; text-align:center; font-size:12px;"><?= htmlspecialchars(t('hotel.rooms_label', 'Qty')) ?></th>
+                <th style="min-width: 180px; position:sticky; left:0; background:#fbfaf7; z-index:11;"><?= htmlspecialchars(t('hotel.rooms', 'Room')) ?></th>
+                <th style="min-width: 55px; text-align:center; font-size:12px;"><?= htmlspecialchars(t('hotel.rooms_label', 'Qty')) ?></th>
                 <?php for($d=1; $d<=$daysInMonth; $d++): ?>
-                  <th style="text-align:center; width:50px; font-size:12px; padding:8px 2px;"><?= $d ?></th>
+                  <th style="text-align:center; width:45px; font-size:12px; padding:8px 2px;"><?= $d ?></th>
                 <?php endfor; ?>
               </tr>
             </thead>
@@ -66,7 +70,7 @@ require __DIR__ . '/components/header.php';
                 $qty = (int)$r['quantity'];
               ?>
                 <tr>
-                  <td style="font-weight:700; background:#fbfaf7;"><?= htmlspecialchars($r['name']) ?></td>
+                  <td style="font-weight:700; background:#fbfaf7; position:sticky; left:0; z-index:5; border-right:1px solid var(--line);"><?= htmlspecialchars($r['name']) ?></td>
                   <td style="text-align:center; background:#fbfaf7; font-weight:600; font-size:13px;"><?= $qty ?></td>
                   <?php
                     for($d=1; $d<=$daysInMonth; $d++) {
@@ -102,7 +106,7 @@ require __DIR__ . '/components/header.php';
           </table>
         </div>
       </div>
-      <div style="margin-top:12px; font-size:13px; color:var(--muted); display:flex; gap:16px; flex-wrap:wrap;">
+      <div style="margin-top:14px; font-size:13px; color:var(--muted); display:flex; gap:16px; flex-wrap:wrap;">
         <div style="display:flex; align-items:center; gap:6px;"><span style="display:inline-block; width:16px; height:16px; border-radius:4px; background-color:#e8f5e9;"></span> <?= htmlspecialchars(t('hotel.available', 'Available')) ?></div>
         <div style="display:flex; align-items:center; gap:6px;"><span style="display:inline-block; width:16px; height:16px; border-radius:4px; background-color:#fff8e1;"></span> <?= htmlspecialchars(t('hotel.partially_occupied', 'Partially Occupied')) ?></div>
         <div style="display:flex; align-items:center; gap:6px;"><span style="display:inline-block; width:16px; height:16px; border-radius:4px; background-color:#ffebee;"></span> <?= htmlspecialchars(t('hotel.fully_booked', 'Fully Booked')) ?></div>

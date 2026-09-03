@@ -123,21 +123,21 @@ $admin_active       = 'profile';
             <div class="grid-2">
               <div class="field">
                 <label><?= htmlspecialchars(t('auth.first_name', 'First name')) ?> *</label>
-                <input type="text" name="first_name" value="<?= htmlspecialchars($old['first_name']) ?>" required>
+                <input type="text" name="first_name" value="<?= htmlspecialchars($old['first_name'] ?? '') ?>" required>
               </div>
               <div class="field">
                 <label><?= htmlspecialchars(t('auth.last_name', 'Last name')) ?> *</label>
-                <input type="text" name="last_name" value="<?= htmlspecialchars($old['last_name']) ?>" required>
+                <input type="text" name="last_name" value="<?= htmlspecialchars($old['last_name'] ?? '') ?>" required>
               </div>
             </div>
             <div class="field">
               <label><?= htmlspecialchars(t('admin.email')) ?> *</label>
-              <input type="email" value="<?= htmlspecialchars($old['email']) ?>" disabled>
+              <input type="email" value="<?= htmlspecialchars($old['email'] ?? '') ?>" disabled>
               <div class="hint"><?= htmlspecialchars(t('account.email_immutable', 'Email cannot be changed.')) ?></div>
             </div>
             <div class="field">
               <label><?= htmlspecialchars(t('admin.phone')) ?></label>
-              <input type="tel" name="phone" value="<?= htmlspecialchars($old['phone']) ?>">
+              <input type="tel" name="phone" value="<?= htmlspecialchars($old['phone'] ?? '') ?>">
             </div>
             <div class="field">
               <label><?= htmlspecialchars(t('admin.avatar')) ?></label>
@@ -147,7 +147,7 @@ $admin_active       = 'profile';
             </div>
             <div class="field">
               <label><?= htmlspecialchars(t('admin.avatar_url', 'Or image URL')) ?></label>
-              <input type="url" name="avatar" value="<?= htmlspecialchars($old['avatar']) ?>" placeholder="https://...">
+              <input type="url" name="avatar" value="<?= htmlspecialchars($old['avatar'] ?? '') ?>" placeholder="https://...">
             </div>
             <div class="form-actions">
               <button type="submit" class="btn"><?= htmlspecialchars(t('admin.save')) ?></button>

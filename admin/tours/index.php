@@ -75,11 +75,11 @@ $admin_active = 'tours';
         <div class="table-wrap">
           <table>
             <thead><tr>
-              <th><?= htmlspecialchars(AdminQuery::sortLink('name', t('admin.name'), ['id','name','duration_days','base_price','rating','created_at'], 'name')) ?></th>
+              <th><?= AdminQuery::sortLink('name', t('admin.name'), ['id','name','duration_days','base_price','rating','created_at'], 'name') ?></th>
               <th><?= htmlspecialchars(t('admin.category')) ?></th>
-              <th><?= htmlspecialchars(AdminQuery::sortLink('duration_days', t('admin.days','Days'), ['id','name','duration_days','base_price','rating','created_at'], 'name')) ?></th>
-              <th><?= htmlspecialchars(AdminQuery::sortLink('base_price', t('admin.price'), ['id','name','duration_days','base_price','rating','created_at'], 'name')) ?></th>
-              <th><?= htmlspecialchars(AdminQuery::sortLink('rating', t('admin.rating'), ['id','name','duration_days','base_price','rating','created_at'], 'name')) ?></th>
+              <th><?= AdminQuery::sortLink('duration_days', t('admin.days','Days'), ['id','name','duration_days','base_price','rating','created_at'], 'name') ?></th>
+              <th><?= AdminQuery::sortLink('base_price', t('admin.price'), ['id','name','duration_days','base_price','rating','created_at'], 'name') ?></th>
+              <th><?= AdminQuery::sortLink('rating', t('admin.rating'), ['id','name','duration_days','base_price','rating','created_at'], 'name') ?></th>
               <th><?= htmlspecialchars(t('admin.featured')) ?></th>
               <th><?= htmlspecialchars(t('admin.status')) ?></th>
               <th><?= htmlspecialchars(t('admin.actions')) ?></th>

@@ -182,7 +182,7 @@ class BookingSummaryService
                 case 'transfer':
                     $rows = $pdo->prepare(
                         "SELECT b.id, b.booking_code, b.booking_reference,
-                                CONCAT_WS(' → ', b.origin, b.destination) AS service_name,
+                                CONCAT_WS(' → ', COALESCE(NULLIF(b.pickup_address, ''), b.origin), COALESCE(NULLIF(b.destination_address, ''), b.destination)) AS service_name,
                                 COALESCE(NULLIF(b.guest_name,''), b.full_name, 'Guest') AS customer,
                                 b.total_price, 'USD' AS currency, b.status,
                                 DATE(b.created_at) AS created_date
@@ -268,7 +268,7 @@ class BookingSummaryService
 
     private static function fetchTransfer($pdo, int $id, ?int $userId): ?array
     {
-        $sql = "SELECT b.*, CONCAT_WS(' → ', b.origin, b.destination) AS service_name,
+        $sql = "SELECT b.*, CONCAT_WS(' → ', COALESCE(NULLIF(b.pickup_address, ''), b.origin), COALESCE(NULLIF(b.destination_address, ''), b.destination)) AS service_name,
                        COALESCE(NULLIF(b.guest_name,''), b.full_name, 'Guest') AS customer,
                        DATE(b.created_at) AS created_date, 'USD' AS currency
                 FROM bookings b WHERE b.id = :id";

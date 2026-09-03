@@ -90,25 +90,25 @@ $C = fn($v)=>htmlspecialchars((string)($v ?? ''));
             <?php if (!$rows): ?><tr><td colspan="6"><div class="muted" style="text-align:center;padding:20px;"><?= $C(t('admin.no_records')) ?></div></td></tr>
             <?php else: foreach ($rows as $r): ?>
               <tr>
-                <td><?php if(!empty($r['image_url'])): ?><img class="thumb" src="<?= $C($r['image_url']) ?>" alt=""><?php else: ?><span class="muted">—</span><?php endif; ?></td>
-                <td class="code"><?= $C($r['name']) ?></td>
+                <td><?php if(!empty($r['image_url'])): ?><img class="thumb" src="<?= $C('/' . ltrim($r['image_url'], '/')) ?>" alt="" style="height:38px;width:58px;object-fit:cover;border-radius:6px;"><?php else: ?><span class="muted">—</span><?php endif; ?></td>
+                <td class="code"><strong><?= $C($r['name']) ?></strong></td>
                 <td><?= $C($r['country'] ?? '—') ?></td>
-                <td><span class="badge badge-<?= (int)$r['featured']?'active':'inactive' ?>"><?= (int)$r['featured']?'★':'' ?></span></td>
-                <td><span class="badge badge-<?= (int)$r['is_active']?'active':'inactive' ?>"><?= (int)$r['is_active']?$C(t('admin.active')):$C(t('admin.inactive')) ?></span></td>
+                <td><span class="badge badge-<?= (int)($r['featured'] ?? 0)?'active':'inactive' ?>"><?= (int)($r['featured'] ?? 0)?'★ Featured':'—' ?></span></td>
+                <td><span class="badge badge-<?= (int)($r['is_active'] ?? 1)?'active':'inactive' ?>"><?= (int)($r['is_active'] ?? 1)?$C(t('admin.active')):$C(t('admin.inactive')) ?></span></td>
                 <td>
                   <div class="actions">
-                    <a class="icon-btn" href="form.php?id=<?= (int)$r['id'] ?>"><i class="fa-solid fa-pen"></i></a>
+                    <a class="icon-btn" href="form.php?id=<?= (int)$r['id'] ?>" title="Edit"><i class="fa-solid fa-pen"></i></a>
                     <form method="post" action="index.php" style="display:inline;"><?= csrf_field() ?>
-                      <input type="hidden" name="action" value="featured"><input type="hidden" name="id" value="<?= (int)$r['id'] ?>"><input type="hidden" name="value" value="<?= (int)$r['featured']?0:1 ?>">
-                      <button class="icon-btn" type="submit" title="<?= $C(t('admin.featured')) ?>"><i class="fa-solid <?= (int)$r['featured']?'fa-star':'fa-star-o' ?>"></i></button>
+                      <input type="hidden" name="action" value="featured"><input type="hidden" name="id" value="<?= (int)$r['id'] ?>"><input type="hidden" name="value" value="<?= (int)($r['featured'] ?? 0)?0:1 ?>">
+                      <button class="icon-btn" type="submit" title="<?= $C(t('admin.featured')) ?>"><i class="<?= (int)($r['featured'] ?? 0)?'fa-solid fa-star':'fa-regular fa-star' ?>" style="color:<?= (int)($r['featured'] ?? 0)?'#f59e0b':'inherit' ?>;"></i></button>
                     </form>
                     <form method="post" action="index.php" style="display:inline;"><?= csrf_field() ?>
                       <input type="hidden" name="action" value="toggle"><input type="hidden" name="id" value="<?= (int)$r['id'] ?>">
-                      <button class="icon-btn" type="submit"><i class="fa-solid <?= (int)$r['is_active']?'fa-ban':'fa-check' ?>"></i></button>
+                      <button class="icon-btn" type="submit" title="Toggle Status"><i class="fa-solid <?= (int)($r['is_active'] ?? 1)?'fa-ban':'fa-check' ?>"></i></button>
                     </form>
                     <form method="post" action="index.php" style="display:inline;"><?= csrf_field() ?>
                       <input type="hidden" name="action" value="delete"><input type="hidden" name="id" value="<?= (int)$r['id'] ?>">
-                      <button class="icon-btn danger" type="submit" onclick="return confirm('<?= $C(t('admin.delete_confirm')) ?>')"><i class="fa-solid fa-trash"></i></button>
+                      <button class="icon-btn danger" type="submit" onclick="return confirm('<?= $C(t('admin.delete_confirm')) ?>')" title="Delete"><i class="fa-solid fa-trash"></i></button>
                     </form>
                   </div>
                 </td>

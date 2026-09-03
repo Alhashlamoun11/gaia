@@ -75,11 +75,11 @@ $admin_active = 'events';
         <div class="table-wrap">
           <table>
             <thead><tr>
-              <th><?= htmlspecialchars(AdminQuery::sortLink('title', t('admin.title'), ['id','title','date_label','location','price','created_at'], 'title')) ?></th>
+              <th><?= AdminQuery::sortLink('title', t('admin.title'), ['id','title','date_label','location','price','created_at'], 'title') ?></th>
               <th><?= htmlspecialchars(t('admin.location')) ?></th>
               <th><?= htmlspecialchars(t('admin.date')) ?></th>
               <th><?= htmlspecialchars(t('admin.category')) ?></th>
-              <th><?= htmlspecialchars(AdminQuery::sortLink('price', t('admin.price'), ['id','title','date_label','location','price','created_at'], 'title')) ?></th>
+              <th><?= AdminQuery::sortLink('price', t('admin.price'), ['id','title','date_label','location','price','created_at'], 'title') ?></th>
               <th><?= htmlspecialchars(t('admin.capacity')) ?></th>
               <th><?= htmlspecialchars(t('admin.status')) ?></th>
               <th><?= htmlspecialchars(t('admin.actions')) ?></th>

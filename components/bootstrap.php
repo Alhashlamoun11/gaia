@@ -115,23 +115,18 @@ function lang_slug($row, $slugField = 'slug', $fallback = '')
 // ------------------------------------------------------------
 // LANGUAGES / TRANSLATIONS
 // ------------------------------------------------------------
-function gaia_current_lang()
+function gaia_current_lang($refresh = false)
 {
     static $lang = null;
-    if ($lang !== null) {
+    if ($lang !== null && !$refresh) {
         return $lang;
     }
     $lang = 'en';
-    // 1) URL path prefix is preferred (/en/... /ar/...)
-    //    The .htaccess rewrites these to ?lang=, so $_GET['lang'] is set.
-    // 2) Fall back to ?lang= query parameter
-    // 3) Fall back to session / cookie
-    // 4) Default 'en'
-    if (isset($_GET['lang'])) {
-        $candidate = trim($_GET['lang']);
-        if (in_array($candidate, ['en', 'ar'], true)) {
-            $lang = $candidate;
-        }
+    $uri = $_SERVER['REQUEST_URI'] ?? '';
+    if (preg_match('#^/(en|ar)(/|\?|$)#i', $uri, $m)) {
+        $lang = strtolower($m[1]);
+    } elseif (isset($_GET['lang']) && in_array(strtolower(trim($_GET['lang'])), ['en', 'ar'], true)) {
+        $lang = strtolower(trim($_GET['lang']));
     } elseif (isset($_SESSION['gaia_lang']) && in_array($_SESSION['gaia_lang'], ['en', 'ar'], true)) {
         $lang = $_SESSION['gaia_lang'];
     } elseif (isset($_COOKIE['gaia_lang']) && in_array($_COOKIE['gaia_lang'], ['en', 'ar'], true)) {
@@ -215,6 +210,8 @@ function gaia_url($path, $moduleBase = '')
         $clean = 'checkout';
     } elseif ($path === 'search-hotels.php') {
         $clean = 'search-hotels';
+    } elseif ($path === 'partner/apply.php' || $path === 'partner/apply') {
+        $clean = 'partner/apply';
     } elseif (strpos($path, 'index.php#') === 0) {
         $anchor = substr($path, strpos($path, '#') + 1);
         $map = [

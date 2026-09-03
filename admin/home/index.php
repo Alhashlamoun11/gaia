@@ -15,6 +15,7 @@ $pdo = getPDO();
 $tabs = [
     'banners'        => ['table'=>'banners',        'title_key'=>'admin.banners'],
     'highlights'     => ['table'=>'highlights',     'title_key'=>'admin.highlights'],
+    'pickup_locations'=> ['table'=>'pickup_locations', 'title_key'=>'admin.pickup_locations'],
     'trust_scores'   => ['table'=>'trust_scores',   'title_key'=>'admin.trust_scores'],
     'awards'         => ['table'=>'awards',         'title_key'=>'admin.awards'],
     'night_offerings'=> ['table'=>'night_offerings','title_key'=>'admin.night_offerings'],
@@ -58,7 +59,7 @@ $total = (int)$c->fetchColumn();
 $pages = max(1, (int)ceil($total / $pg['per_page']));
 if ($pg['page'] > $pages) { $pg['page'] = $pages; $pg['offset'] = ($pg['page'] - 1) * $pg['per_page']; }
 
-$orderCol = in_array($tab, ['banners','highlights','awards','night_offerings','social_links']) ? 'sort_order' : 'id';
+$orderCol = in_array($tab, ['banners','highlights','pickup_locations','awards','night_offerings','social_links']) ? 'sort_order' : 'id';
 $rows = $pdo->prepare("SELECT * FROM `{$table}` WHERE $wh ORDER BY {$orderCol} ASC LIMIT {$pg['per_page']} OFFSET {$pg['offset']}");
 $rows->execute($params);
 $rows = $rows->fetchAll();
@@ -68,6 +69,7 @@ $cols = [];
 switch ($tab) {
     case 'banners': $cols = ['id','page','title','sort_order','is_active']; break;
     case 'highlights': $cols = ['id','section','title','icon','image_url','sort_order','is_active']; break;
+    case 'pickup_locations': $cols = ['id','name','sort_order','is_active']; break;
     case 'trust_scores': $cols = ['id','icon','score','label','color','sort_order','is_active']; break;
     case 'awards': $cols = ['id','title','icon','sort_order','is_active']; break;
     case 'night_offerings': $cols = ['id','type','title','badge','price_value','price_label','image_url','sort_order','is_active']; break;
@@ -148,13 +150,13 @@ function _home_esc($v) { return htmlspecialchars((string)$v); }
                   <td>
                     <div class="actions">
                       <a class="icon-btn" href="form.php?tab=<?= _home_esc($tab) ?>&id=<?= (int)$r['id'] ?>"><i class="fa-solid fa-pen"></i></a>
-                      <form method="post" action="index.php" style="display:inline;"><?= csrf_field() ?>
+                      <form method="post" action="index.php?tab=<?= _home_esc($tab) ?>" style="display:inline;"><?= csrf_field() ?>
                         <input type="hidden" name="action" value="toggle_active">
                         <input type="hidden" name="id" value="<?= (int)$r['id'] ?>">
                         <input type="hidden" name="value" value="<?= (int)$r['is_active'] ? 0 : 1 ?>">
                         <button class="icon-btn" type="submit"><i class="fa-solid <?= (int)$r['is_active'] ? 'fa-ban' : 'fa-check' ?>"></i></button>
                       </form>
-                      <form method="post" action="index.php" style="display:inline;"><?= csrf_field() ?>
+                      <form method="post" action="index.php?tab=<?= _home_esc($tab) ?>" style="display:inline;"><?= csrf_field() ?>
                         <input type="hidden" name="action" value="delete">
                         <input type="hidden" name="id" value="<?= (int)$r['id'] ?>">
                         <button class="icon-btn danger" type="submit" onclick="return confirm('<?= _home_esc(t('admin.delete_confirm')) ?>')"><i class="fa-solid fa-trash"></i></button>

@@ -36,37 +36,45 @@ RewriteRule ^rooms/([0-9]+)/?$ room.php?id=$1 [QSA,L]
 RewriteRule ^destinations/?$ weroad/search.php?destinations=1 [QSA,L]
 RewriteRule ^gaia-night/?$ gaia-night.php [QSA,L]
 RewriteRule ^checkout/?$ checkout.php [QSA,L]
-RewriteRule ^transfer-booking/?$ route.php [QSA,L]
-RewriteRule ^transfers/?$ route.php [QSA,L]
+RewriteRule ^transfer-booking/?$ transfer-booking.php [QSA,L]
+RewriteRule ^transfers?/?$ transfer-booking.php [QSA,L]
+RewriteRule ^transportation/?$ transfer-booking.php [QSA,L]
 RewriteRule ^route/?$ route.php [QSA,L]
-RewriteRule ^about/?$ page.php?slug=about [QSA,L]
-RewriteRule ^contact/?$ page.php?slug=contact [QSA,L]
+RewriteRule ^(about|contact|terms-and-conditions|privacy-policy|refund-policy)/?$ page.php?slug=$1 [QSA,L]
 RewriteRule ^reviews/?$ index.php [QSA,L]
-RewriteRule ^hotels/?$ index.php [QSA,L]
+RewriteRule ^hotels/?$ search-hotels.php [QSA,L]
+RewriteCond %{QUERY_STRING} (^|&)slug=([^&]+) [NC]
+RewriteRule ^events/?$ events.php [QSA,L]
 RewriteRule ^events/?$ gaia-night.php [QSA,L]
 
 # --- Destinations ---
 RewriteRule ^(en|ar)/destinations/?$ weroad/search.php?lang=$1&destinations=1 [QSA,L]
 
-# --- Hotels (existing platform home page) ---
-RewriteRule ^(en|ar)/hotels/?$ index.php?lang=$1 [QSA,L]
+# --- Hotels ---
+RewriteRule ^(en|ar)/hotels/?$ search-hotels.php?lang=$1 [QSA,L]
 RewriteRule ^(en|ar)/search-hotels/?$ search-hotels.php?lang=$1 [QSA,L]
 RewriteRule ^search-hotels/?$ search-hotels.php [QSA,L]
 
-# --- Transfers / transfer booking ---
-RewriteRule ^(en|ar)/transfers/?$ route.php?lang=$1 [QSA,L]
+# --- Transfers / transfer booking / Transportation ---
+RewriteRule ^(en|ar)/transfers?/?$ transfer-booking.php?lang=$1 [QSA,L]
+RewriteRule ^(en|ar)/transfer-booking/?$ transfer-booking.php?lang=$1 [QSA,L]
+RewriteRule ^(en|ar)/transportation/?$ transfer-booking.php?lang=$1 [QSA,L]
 RewriteRule ^(en|ar)/route/?$ route.php?lang=$1 [QSA,L]
 RewriteRule ^(en|ar)/checkout/?$ checkout.php?lang=$1 [QSA,L]
-RewriteRule ^(en|ar)/transfer-booking/?$ route.php?lang=$1 [QSA,L]
 
 # --- GAIA Night / Events / Reviews ---
 RewriteRule ^(en|ar)/gaia-night/?$ gaia-night.php?lang=$1 [QSA,L]
+RewriteCond %{QUERY_STRING} (^|&)slug=([^&]+) [NC]
+RewriteRule ^(en|ar)/events/?$ events.php?lang=$1 [QSA,L]
 RewriteRule ^(en|ar)/events/?$ gaia-night.php?lang=$1 [QSA,L]
 RewriteRule ^(en|ar)/reviews/?$ index.php?lang=$1 [QSA,L]
 
-# --- About / Contact (CMS pages from `pages` table) ---
-RewriteRule ^(en|ar)/about/?$ page.php?lang=$1&slug=about [QSA,L]
-RewriteRule ^(en|ar)/contact/?$ page.php?lang=$1&slug=contact [QSA,L]
+# --- Partner Application ---
+RewriteRule ^(en|ar)/partner/apply(\.php)?/?$ partner/apply.php?lang=$1 [QSA,L]
+RewriteRule ^partner/apply(\.php)?/?$ partner/apply.php [QSA,L]
+
+# --- About / Contact / Policies (CMS pages from `pages` table) ---
+RewriteRule ^(en|ar)/(about|contact|terms-and-conditions|privacy-policy|refund-policy)/?$ page.php?lang=$1&slug=$2 [QSA,L]
 
 # --- Authentication & Account (language-prefixed) ---
 RewriteRule ^(en|ar)/login/?$ login.php?lang=$1 [QSA,L]

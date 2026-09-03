@@ -114,9 +114,9 @@ require __DIR__ . '/components/header.php';
         <form method="post" action="profile.php" enctype="multipart/form-data">
           <?= csrf_field() ?>
           
-          <h3 style="margin-bottom:20px;">Basic Information</h3>
+          <h3 style="margin-bottom:20px;"><i class="fa-solid fa-hotel"></i> Basic Information</h3>
           
-          <div class="form-grid" style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:16px;">
+          <div class="form-grid-2">
             <div class="field">
               <label>Hotel Name (English) <span style="color:#b3261e">*</span></label>
               <input type="text" name="name" value="<?= htmlspecialchars((string)$hotel['name']) ?>" required>
@@ -127,18 +127,18 @@ require __DIR__ . '/components/header.php';
             </div>
           </div>
 
-          <div class="field" style="margin-bottom:16px;">
+          <div class="field" style="margin-bottom:20px;">
             <label>Star Rating</label>
-            <select name="star_rating" style="width:100%; padding:10px; border:1px solid var(--line); border-radius:10px;">
+            <select name="star_rating" style="width:100%; padding:10px 14px; border:1px solid var(--line); border-radius:10px; font-weight:600;">
               <?php for ($i = 1; $i <= 5; $i++): ?>
                 <option value="<?= $i ?>" <?= (int)($hotel['star_rating'] ?? 3) === $i ? 'selected' : '' ?>><?= $i ?> Star<?= $i > 1 ? 's' : '' ?></option>
               <?php endfor; ?>
             </select>
           </div>
 
-          <h3 style="margin-bottom:20px;">Location Information</h3>
+          <h3 style="margin-bottom:20px;"><i class="fa-solid fa-location-dot"></i> Location Information</h3>
           
-          <div class="form-grid" style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:16px;">
+          <div class="form-grid-2">
             <div class="field">
               <label>City</label>
               <input type="text" name="city" value="<?= htmlspecialchars((string)($hotel['city'] ?? '')) ?>">
@@ -149,7 +149,7 @@ require __DIR__ . '/components/header.php';
             </div>
           </div>
 
-          <div class="form-grid" style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:16px;">
+          <div class="form-grid-2">
             <div class="field">
               <label>Location/Address (English)</label>
               <input type="text" name="location" value="<?= htmlspecialchars((string)($hotel['location'] ?? '')) ?>">
@@ -160,19 +160,19 @@ require __DIR__ . '/components/header.php';
             </div>
           </div>
 
-          <h3 style="margin-bottom:20px;">Descriptions</h3>
+          <h3 style="margin-bottom:20px;"><i class="fa-solid fa-align-left"></i> Descriptions</h3>
           
-          <div class="field" style="margin-bottom:16px;">
+          <div class="field">
             <label>Description (English)</label>
             <textarea name="description" rows="4"><?= htmlspecialchars((string)$hotel['description']) ?></textarea>
           </div>
 
-          <div class="field" style="margin-bottom:16px;">
+          <div class="field">
             <label>Description (Arabic)</label>
             <textarea name="description_ar" rows="4"><?= htmlspecialchars((string)($hotel['description_ar'] ?? '')) ?></textarea>
           </div>
 
-          <div class="form-grid" style="display:grid; grid-template-columns:repeat(3, 1fr); gap:16px; margin-bottom:24px;">
+          <div class="form-grid-3">
             <div class="field">
               <label>Phone</label>
               <input type="text" name="phone" value="<?= htmlspecialchars((string)$hotel['phone']) ?>">
@@ -187,8 +187,8 @@ require __DIR__ . '/components/header.php';
             </div>
           </div>
 
-          <h3 style="margin-bottom:20px;">Policies</h3>
-          <div class="form-grid" style="display:grid; grid-template-columns:repeat(2, 1fr); gap:16px; margin-bottom:16px;">
+          <h3 style="margin-bottom:20px;"><i class="fa-solid fa-clock"></i> Policies</h3>
+          <div class="form-grid-2">
             <div class="field">
               <label>Check-in Time</label>
               <input type="time" name="check_in_time" value="<?= htmlspecialchars((string)$hotel['check_in_time'] ?: '14:00') ?>">
@@ -199,39 +199,39 @@ require __DIR__ . '/components/header.php';
             </div>
           </div>
 
-          <div class="field" style="margin-bottom:24px;">
+          <div class="field">
             <label>Cancellation Policy</label>
             <textarea name="cancellation_policy" rows="3"><?= htmlspecialchars((string)$hotel['cancellation_policy']) ?></textarea>
           </div>
 
-          <h3 style="margin-bottom:20px;">SEO Settings</h3>
-          <div class="field" style="margin-bottom:16px;">
+          <h3 style="margin-bottom:20px;"><i class="fa-solid fa-globe"></i> SEO Settings</h3>
+          <div class="field">
             <label>SEO Title</label>
             <input type="text" name="seo_title" value="<?= htmlspecialchars((string)($hotel['seo_title'] ?? '')) ?>">
           </div>
-          <div class="field" style="margin-bottom:30px;">
+          <div class="field" style="margin-bottom:24px;">
             <label>SEO Description</label>
             <textarea name="seo_description" rows="3"><?= htmlspecialchars((string)($hotel['seo_description'] ?? '')) ?></textarea>
           </div>
 
-          <h3 style="margin-bottom:20px;">Media</h3>
-          <div class="form-grid" style="display:grid; grid-template-columns:1fr 1fr; gap:24px; margin-bottom:24px;">
+          <h3 style="margin-bottom:20px;"><i class="fa-solid fa-images"></i> Media</h3>
+          <div class="media-upload-grid" style="margin-bottom:24px;">
             
             <div class="field">
               <label>Main Hotel Image</label>
               <?php if (!empty($hotel['image_url'])): ?>
                 <div style="margin-bottom:10px;">
-                    <img src="<?= htmlspecialchars('/' . ltrim($hotel['image_url'], '/')) ?>" alt="Main Image" style="max-width:100%; max-height:200px; border-radius:8px; border:1px solid var(--line);">
+                    <img src="<?= htmlspecialchars('/' . ltrim($hotel['image_url'], '/')) ?>" alt="Main Image" style="max-width:100%; max-height:180px; border-radius:8px; border:1px solid var(--line); object-fit:cover;">
                 </div>
               <?php endif; ?>
               <input type="file" name="main_image" accept="image/jpeg,image/png,image/webp">
-              <small class="muted" style="display:block; margin-top:5px;">Select a new image to replace the current one.</small>
+              <small class="hint">Select a new image to replace the current one.</small>
             </div>
 
             <div class="field">
               <label>Add Gallery Images</label>
               <input type="file" name="gallery_images[]" accept="image/jpeg,image/png,image/webp" multiple>
-              <small class="muted" style="display:block; margin-top:5px;">You can select multiple images to upload.</small>
+              <small class="hint">You can select multiple images to upload.</small>
             </div>
           </div>
 
@@ -243,13 +243,13 @@ require __DIR__ . '/components/header.php';
         $gallery = json_decode((string)$hotel['gallery_urls'] ?: '[]', true) ?: [];
         if (!empty($gallery)):
       ?>
-      <div class="card" style="margin-top:24px;">
-        <h3 style="margin-bottom:20px;">Hotel Gallery</h3>
-        <div style="display:flex; flex-wrap:wrap; gap:16px;">
+      <div class="card" style="margin-top:20px;">
+        <h3 style="margin-bottom:18px;"><i class="fa-solid fa-photo-film"></i> Hotel Gallery</h3>
+        <div class="gallery-preview-grid">
             <?php foreach($gallery as $img): ?>
-                <div style="position:relative; width:150px; height:150px; border:1px solid var(--line); border-radius:8px; overflow:hidden;">
-                    <img src="<?= htmlspecialchars('/' . ltrim($img, '/')) ?>" style="width:100%; height:100%; object-fit:cover;">
-                    <form method="post" action="profile.php" style="position:absolute; top:5px; right:5px;">
+                <div class="gallery-preview-item">
+                    <img src="<?= htmlspecialchars('/' . ltrim($img, '/')) ?>" alt="Gallery Image" loading="lazy">
+                    <form method="post" action="profile.php">
                         <?= csrf_field() ?>
                         <input type="hidden" name="action" value="remove_gallery">
                         <input type="hidden" name="remove_url" value="<?= htmlspecialchars($img) ?>">

@@ -57,6 +57,9 @@ try {
         $route = $pdo->query('SELECT * FROM routes WHERE is_active = 1 ORDER BY base_price ASC LIMIT 1')->fetch();
         $car   = $pdo->query('SELECT * FROM car_classes WHERE is_active = 1 ORDER BY price_multiplier ASC LIMIT 1')->fetch();
     }
+    
+    // Load pickup locations
+    $pickupLocations = $pdo->query('SELECT name FROM pickup_locations WHERE is_active = 1 ORDER BY sort_order')->fetchAll(PDO::FETCH_COLUMN);
 } catch (PDOException $e) {
     $error = 'Database unavailable: ' . htmlspecialchars($e->getMessage());
 }
@@ -95,8 +98,8 @@ $womenPrice     = transfer_extra_price('women_driver', defined('PRICE_WOMEN_DRIV
   .card{background:#fff;border-radius:16px;padding:32px;box-shadow:var(--shadow);margin-bottom:22px;}.card h2{font-size:21px;font-weight:700;margin-bottom:24px;}
   .form-row{display:grid;grid-template-columns:1fr 1fr;gap:22px;margin-bottom:20px;}
   .field label{display:block;font-size:13.5px;font-weight:600;margin-bottom:8px;}
-  .field input,.field textarea{width:100%;border:1px solid var(--line);border-radius:10px;padding:13px 14px;font-size:14px;font-family:inherit;outline:none;color:var(--ink);transition:border-color .2s;}
-  .field input:focus,.field textarea:focus{border-color:var(--teal);}.field .hint{font-size:11.5px;color:var(--muted);margin-top:6px;}
+  .field input,.field select,.field textarea{width:100%;border:1px solid var(--line);border-radius:10px;padding:13px 14px;font-size:14px;font-family:inherit;outline:none;color:var(--ink);transition:border-color .2s;background:#fff;}
+  .field input:focus,.field select:focus,.field textarea:focus{border-color:var(--teal);}.field .hint{font-size:11.5px;color:var(--muted);margin-top:6px;}
   .field .input-icon{position:relative;}.field .input-icon i{position:absolute;right:14px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:14px;}.field .input-icon input{padding-right:38px;}
   .divider{height:1px;background:var(--line);margin:22px 0;}
   .checkbox-row{display:flex;align-items:flex-start;gap:12px;margin-bottom:18px;}.checkbox-row input[type=checkbox]{width:20px;height:20px;flex:none;margin-top:1px;accent-color:var(--teal);border-radius:5px;}
@@ -151,7 +154,16 @@ $womenPrice     = transfer_extra_price('women_driver', defined('PRICE_WOMEN_DRIV
           <div class="field"><label><?= t('checkout.pickup_date', 'Pickup date') ?></label><div class="input-icon"><input type="date" name="pickup_date" value="<?= htmlspecialchars($date) ?>" required><i class="fa-regular fa-calendar"></i></div></div>
           <div class="field"><label><?= t('checkout.arrival_time', 'Scheduled arrival time') ?></label><div class="input-icon"><input type="time" name="pickup_time" placeholder="00:00"><i class="fa-regular fa-clock"></i></div></div>
         </div>
-        <div class="field" style="margin-bottom:6px;"><label><?= t('checkout.destination_label', 'Destination (address or hotel name)') ?></label><input type="text" name="destination_address" placeholder="<?= t('checkout.destination_placeholder', 'Laguna Hotel') ?>"></div>
+        <div class="field" style="margin-bottom:12px;">
+          <label><?= t('checkout.pickup_location', 'Pickup Location') ?></label>
+          <select name="pickup_address" required>
+            <option value=""><?= t('checkout.select_location', 'Select a location...') ?></option>
+            <?php foreach ($pickupLocations as $locName): ?>
+              <option value="<?= htmlspecialchars($locName) ?>"><?= htmlspecialchars($locName) ?></option>
+            <?php endforeach; ?>
+          </select>
+        </div>
+        <div class="field" style="margin-bottom:6px;"><label><?= t('checkout.destination_label', 'Destination (address or hotel name)') ?></label><input type="text" name="destination_address" placeholder="<?= t('checkout.destination_placeholder', 'Laguna Hotel') ?>" required></div>
         <div class="divider"></div>
         <div class="checkbox-row" style="margin-bottom:0;">
           <input type="checkbox" id="returnTrip" name="return_trip" value="1">

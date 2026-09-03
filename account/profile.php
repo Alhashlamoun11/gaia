@@ -198,49 +198,49 @@ $activeTab = 'profile';
       <div class="grid-2">
         <div class="field">
           <label for="first_name"><?= htmlspecialchars(t('auth.first_name')) ?> *</label>
-          <input type="text" id="first_name" name="first_name" value="<?= htmlspecialchars($old['first_name']) ?>" required>
+          <input type="text" id="first_name" name="first_name" value="<?= htmlspecialchars($old['first_name'] ?? '') ?>" required>
         </div>
         <div class="field">
           <label for="last_name"><?= htmlspecialchars(t('auth.last_name')) ?> *</label>
-          <input type="text" id="last_name" name="last_name" value="<?= htmlspecialchars($old['last_name']) ?>" required>
+          <input type="text" id="last_name" name="last_name" value="<?= htmlspecialchars($old['last_name'] ?? '') ?>" required>
         </div>
       </div>
 <div class="grid-2">
         <div class="field">
           <label for="email"><?= htmlspecialchars(t('auth.email')) ?> *</label>
-          <input type="email" id="email" name="email" value="<?= htmlspecialchars($old['email']) ?>" disabled>
+          <input type="email" id="email" name="email" value="<?= htmlspecialchars($old['email'] ?? '') ?>" disabled>
           <p class="avatar-hint" style="margin-top:6px;"><?= htmlspecialchars(t('account.email_immutable', 'Email cannot be changed.')) ?></p>
         </div>
         <div class="field">
           <label for="phone"><?= htmlspecialchars(t('auth.phone')) ?></label>
-          <input type="tel" id="phone" name="phone" value="<?= htmlspecialchars($old['phone']) ?>">
+          <input type="tel" id="phone" name="phone" value="<?= htmlspecialchars($old['phone'] ?? '') ?>">
         </div>
       </div>
       <div class="grid-2">
         <div class="field">
           <label for="country"><?= htmlspecialchars(t('auth.country')) ?></label>
-          <input type="text" id="country" name="country" value="<?= htmlspecialchars($old['country']) ?>">
+          <input type="text" id="country" name="country" value="<?= htmlspecialchars($old['country'] ?? '') ?>">
         </div>
         <div class="field">
           <label for="city"><?= htmlspecialchars(t('account.city')) ?></label>
-          <input type="text" id="city" name="city" value="<?= htmlspecialchars($old['city']) ?>">
+          <input type="text" id="city" name="city" value="<?= htmlspecialchars($old['city'] ?? '') ?>">
         </div>
       </div>
       <div class="grid-2">
         <div class="field">
           <label for="address"><?= htmlspecialchars(t('account.address')) ?></label>
-          <input type="text" id="address" name="address" value="<?= htmlspecialchars($old['address']) ?>">
+          <input type="text" id="address" name="address" value="<?= htmlspecialchars($old['address'] ?? '') ?>">
         </div>
         <div class="field">
           <label for="nationality"><?= htmlspecialchars(t('account.nationality')) ?></label>
-          <input type="text" id="nationality" name="nationality" value="<?= htmlspecialchars($old['nationality']) ?>">
+          <input type="text" id="nationality" name="nationality" value="<?= htmlspecialchars($old['nationality'] ?? '') ?>">
         </div>
       </div>
       <div class="field">
         <label for="preferred_language"><?= htmlspecialchars(t('auth.preferred_language')) ?></label>
         <select id="preferred_language" name="preferred_language" style="width:100%;padding:12px 14px;border:1px solid var(--line);border-radius:10px;font-size:14px;font-family:inherit;background:#fbfaf7;">
-          <option value="en" <?= $old['preferred_language'] === 'en' ? 'selected' : '' ?>>English</option>
-          <option value="ar" <?= $old['preferred_language'] === 'ar' ? 'selected' : '' ?>>العربية</option>
+          <option value="en" <?= ($old['preferred_language'] ?? '') === 'en' ? 'selected' : '' ?>>English</option>
+          <option value="ar" <?= ($old['preferred_language'] ?? '') === 'ar' ? 'selected' : '' ?>>العربية</option>
         </select>
       </div>
       <div class="field">
@@ -251,7 +251,7 @@ $activeTab = 'profile';
       </div>
       <div class="field">
         <label for="avatar"><?= htmlspecialchars(t('account.avatar_url')) ?></label>
-        <input type="url" id="avatar" name="avatar" value="<?= htmlspecialchars($old['avatar']) ?>" placeholder="https://...">
+        <input type="url" id="avatar" name="avatar" value="<?= htmlspecialchars($old['avatar'] ?? '') ?>" placeholder="https://...">
       </div>
 <button type="submit" class="btn-primary"><?= htmlspecialchars(t('account.save_changes')) ?></button>
     </form>

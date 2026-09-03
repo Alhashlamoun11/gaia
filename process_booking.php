@@ -69,6 +69,7 @@ $pickupTime      = post('pickup_time');
 $passengerCount  = (int)post('passenger_count', 1);
 $flightNumber    = post('flight_number');
 $arrivalTime     = post('arrival_time');
+$pickupAddress   = post('pickup_address');
 $destAddress     = post('destination_address');
 $returnTrip      = post('return_trip') === '1' || post('return_trip') === 'on' ? 1 : 0;
 $fullName        = post('full_name');
@@ -218,7 +219,7 @@ try {
             "INSERT INTO bookings
                (booking_code, booking_reference, route_id, car_class_id, user_id, promo_code_id,
                 origin, destination, pickup_date, pickup_time, passenger_count,
-                flight_number, arrival_time, destination_address, return_trip,
+                flight_number, arrival_time, pickup_address, destination_address, return_trip,
                 full_name, email, phone,
                 guest_name, guest_email, guest_phone,
                 child_seats, water_bottles, pet_carrier, women_driver, comments,
@@ -227,7 +228,7 @@ try {
              VALUES
                (:booking_code, :booking_reference, :route_id, :car_class_id, :user_id, :promo_code_id,
                 :origin, :destination, :pickup_date, :pickup_time, :passenger_count,
-                :flight_number, :arrival_time, :destination_address, :return_trip,
+                :flight_number, :arrival_time, :pickup_address, :destination_address, :return_trip,
                 :full_name, :email, :phone,
                 :guest_name, :guest_email, :guest_phone,
 :child_seats, :water_bottles, :pet_carrier, :women_driver, :comments,
@@ -249,6 +250,7 @@ try {
             ':passenger_count'     => $passengerCount,
             ':flight_number'       => $flightNumber !== '' ? $flightNumber : null,
             ':arrival_time'        => $arrivalTime !== '' ? $arrivalTime : null,
+            ':pickup_address'      => $pickupAddress !== '' ? $pickupAddress : null,
             ':destination_address' => $destAddress !== '' ? $destAddress : null,
             ':return_trip'         => $returnTrip,
             ':full_name'           => $fullName,

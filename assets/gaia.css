@@ -389,10 +389,10 @@ h6 {
 }
 
 .gaia-icon-btn {
-    width: 38px;
-    height: 38px;
-    border-radius: 50%;
-    border: 1px solid currentColor;
+    width: 36px;
+    height: 36px;
+    border: none;
+    border-radius: 0;
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -402,10 +402,12 @@ h6 {
     cursor: pointer;
     text-decoration: none;
     opacity: .85;
+    transition: opacity .2s ease, transform .2s ease;
 }
 
 .gaia-icon-btn:hover {
     opacity: 1;
+    transform: scale(1.08);
 }
 
 .gaia-lang span {
@@ -427,6 +429,25 @@ h6 {
 }
 
 .gaia-header-account:hover {
+    opacity: 1;
+}
+
+.gaia-header-partner-btn {
+    border: 1px solid rgba(255, 255, 255, 0.28);
+    background: rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(4px);
+    transition: all .2s ease;
+}
+
+.gaia-header-solid .gaia-header-partner-btn {
+    border-color: rgba(255, 255, 255, 0.18);
+    background: rgba(255, 255, 255, 0.06);
+}
+
+.gaia-header-partner-btn:hover {
+    background: var(--gaia-accent, #17c9b3);
+    border-color: var(--gaia-accent, #17c9b3);
+    color: #0d1730 !important;
     opacity: 1;
 }
 
@@ -456,7 +477,7 @@ h6 {
 
 /* Burger */
 .gaia-burger {
-    display: none;
+    display: none !important;
     width: 40px;
     height: 40px;
     border: none;
@@ -701,189 +722,219 @@ body.gaia-no-scroll {
     color: #241a05;
 }
 
-/* ---------- Footer ---------- */
-.gaia-footer {
-    background: var(--gaia-night);
-    color: #cfcfd6;
-    margin-top: 40px;
+/* ---------- Simple & Elegant Footer ---------- */
+.gaia-footer-simple {
+    background: #0d1730;
+    color: #a4b3d6;
+    padding-top: 60px;
+    font-size: 14px;
+    border-top: 1px solid rgba(255,255,255,0.06);
 }
 
-.gaia-footer-top {
-    max-width: 1280px;
-    margin: 0 auto;
-    padding: 52px 24px 40px;
+.footer-simple-grid {
     display: grid;
-    grid-template-columns: 1.2fr 2fr 1.2fr;
+    grid-template-columns: 1.4fr 1fr 1fr 1fr;
     gap: 40px;
+    padding-bottom: 50px;
 }
 
-.gaia-footer-brand .gaia-logo-text {
-    color: #fff;
+.footer-brand-col .footer-logo {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    text-decoration: none;
+    color: #ffffff;
+    font-size: 18px;
+    font-weight: 800;
+    margin-bottom: 12px;
 }
 
-.gaia-footer-about {
+.footer-brand-col .footer-logo img {
+    height: 38px;
+    width: auto;
+    border-radius: 6px;
+}
+
+.footer-brand-col .footer-logo em {
+    font-style: normal;
+    font-weight: 400;
+    font-size: 12px;
+    color: var(--gaia-accent, #17c9b3);
+    letter-spacing: 1px;
+}
+
+.footer-tagline {
+    font-size: 13.5px;
+    line-height: 1.6;
+    color: #8fa0c4;
+    margin: 0 0 18px;
+    max-width: 320px;
+}
+
+.footer-wa-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: #25d366;
+    color: #ffffff !important;
+    padding: 8px 16px;
+    border-radius: 999px;
     font-size: 13px;
-    line-height: 1.7;
-    color: #9b9ba6;
-    margin: 14px 0 18px;
-    max-width: 300px;
+    font-weight: 700;
+    text-decoration: none;
+    margin-bottom: 20px;
+    transition: transform .2s ease;
 }
 
-.gaia-footer-social {
+.footer-wa-btn:hover {
+    transform: translateY(-2px);
+    color: #ffffff;
+}
+
+.footer-social-links {
     display: flex;
     gap: 10px;
 }
 
-.gaia-footer-social a {
-    width: 36px;
-    height: 36px;
+.footer-social-links a {
+    width: 34px;
+    height: 34px;
     border-radius: 50%;
-    border: 1px solid #3a3a44;
-    display: inline-flex;
+    background: rgba(255,255,255,0.08);
+    display: flex;
     align-items: center;
     justify-content: center;
-    color: #cfcfd6;
+    color: #cbd5e1;
+    font-size: 13px;
     text-decoration: none;
+    transition: background .2s, color .2s;
 }
 
-.gaia-footer-social a:hover {
-    background: #fff;
-    color: #16161a;
+.footer-social-links a:hover {
+    background: var(--gaia-accent, #17c9b3);
+    color: #0d1730;
 }
 
-.gaia-footer-cols {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 24px;
+.footer-nav-col h4 {
+    color: #ffffff;
+    font-size: 15px;
+    font-weight: 700;
+    margin: 0 0 16px;
 }
 
-.gaia-footer-col h4 {
-    color: #fff;
-    font-size: 13.5px;
-    margin: 0 0 14px;
-}
-
-.gaia-footer-col ul {
+.footer-nav-col ul {
     list-style: none;
     margin: 0;
     padding: 0;
     display: flex;
     flex-direction: column;
-    gap: 9px;
+    gap: 10px;
 }
 
-.gaia-footer-col a {
-    color: #b9b9c2;
-    font-size: 13px;
+.footer-nav-col a {
+    color: #94a3b8;
     text-decoration: none;
-}
-
-.gaia-footer-col a:hover {
-    color: #fff;
-}
-
-.gaia-footer-news h4 {
-    color: #fff;
     font-size: 13.5px;
-    margin: 0 0 8px;
+    transition: color .2s;
 }
 
-.gaia-footer-news p {
+.footer-nav-col a:hover {
+    color: #ffffff;
+}
+
+.footer-loc {
     font-size: 13px;
-    color: #9b9ba6;
-    margin: 0 0 14px;
-}
-
-.gaia-news-form {
+    color: #64748b;
+    margin-top: 4px;
     display: flex;
-    border: 1px solid #3a3a44;
-    border-radius: 10px;
-    overflow: hidden;
+    align-items: center;
+    gap: 6px;
 }
 
-.gaia-news-form input {
-    flex: 1;
-    background: transparent;
-    border: none;
-    padding: 12px 14px;
-    color: #fff;
-    font-size: 13px;
-    outline: none;
-}
-
-.gaia-news-form button {
-    background: #2a5aa8;
-    color: #fff;
-    border: none;
-    padding: 0 18px;
-    font-weight: 700;
-    font-size: 13px;
-    cursor: pointer;
-}
-
-.gaia-footer-news small {
-    display: block;
-    font-size: 11px;
-    color: #7b7b86;
-    margin-top: 10px;
-    line-height: 1.5;
-}
-
-.gaia-footer-bottom {
-    border-top: 1px solid #2a2a30;
-    max-width: 1280px;
-    margin: 0 auto;
-    padding: 22px 24px;
+.footer-simple-bottom {
+    border-top: 1px solid rgba(255,255,255,0.08);
+    padding: 24px 0 30px;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 16px;
+    gap: 20px;
+    flex-wrap: wrap;
+    font-size: 12.5px;
+    color: #64748b;
+}
+
+.footer-copy {
+    color: #94a3b8;
+}
+
+.footer-legal {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.footer-legal a {
+    color: #94a3b8;
+    text-decoration: none;
+    transition: color .2s;
+}
+
+.footer-legal a:hover {
+    color: #ffffff;
+    text-decoration: underline;
+}
+
+.footer-legal .dot {
+    opacity: 0.4;
+}
+
+.footer-pay-badges {
+    display: flex;
+    gap: 6px;
     flex-wrap: wrap;
 }
 
-.gaia-footer-pay {
-    display: flex;
-    gap: 8px;
-}
-
-.gaia-footer-pay span {
-    border: 1px solid #3a3a44;
-    border-radius: 5px;
+.footer-pay-badges .pay-pill {
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.12);
     padding: 3px 8px;
+    border-radius: 5px;
     font-size: 11px;
-    color: #aaa;
+    color: #94a3b8;
+    font-weight: 600;
 }
 
-.gaia-footer-copyright {
-    font-size: 12px;
-    color: #8f8f9a;
+@media (max-width: 992px) {
+    .footer-simple-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 30px;
+    }
 }
 
-.gaia-footer-copyright a {
-    color: #cfcfd6;
-    text-decoration: none;
+@media (max-width: 640px) {
+    .footer-simple-grid {
+        grid-template-columns: 1fr;
+        gap: 26px;
+    }
+    .footer-simple-bottom {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 14px;
+    }
 }
 
 /* ---------- Responsive ---------- */
-@media (max-width:1024px) {
+@media (max-width: 900px) {
     .gaia-nav {
-        display: none;
+        display: none !important;
     }
 
     .gaia-burger {
-        display: flex;
+        display: flex !important;
     }
 
     .gaia-header-account span {
         display: none;
-    }
-
-    .gaia-footer-top {
-        grid-template-columns: 1fr 1fr;
-    }
-
-    .gaia-footer-cols {
-        grid-template-columns: repeat(2, 1fr);
     }
 }
 

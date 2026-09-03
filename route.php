@@ -53,7 +53,7 @@ try {
     }
 
     // Car classes that can hold the requested passengers
-    $stmt = $pdo->prepare('SELECT * FROM car_classes WHERE is_active = 1 AND passenger_capacity >= ? ORDER BY price_multiplier ASC');
+    $stmt = $pdo->prepare('SELECT * FROM car_classes WHERE is_active = 1 AND passenger_capacity >= ? ORDER BY sort_order ASC, price_multiplier ASC');
     $stmt->execute([max(1, $passengers)]);
     $carClasses = $stmt->fetchAll();
 
@@ -202,12 +202,26 @@ $colors = ['#e7e9ee', '#c9ccd6', '#9aa0af', '#3a3d4d', '#26262f', '#5e6577'];
           $price = classPrice($route, $car);
           $color = $colors[$i % count($colors)];
           $isBest = ($price == 0) || ($i === 0);
+          $cName = lang_value($car, 'name');
+          $cModels = !empty($car['models']) ? $car['models'] : '';
+          $cImg = !empty($car['image_url']) ? $car['image_url'] : null;
         ?>
         <div class="class-card <?= $isBest ? 'best' : '' ?>">
           <?php if ($isBest): ?><div class="best-tag"><?= t('transfers.best_choice', 'Best Choice') ?></div><?php endif; ?>
-          <div class="car-img"><?= carSVG($color) ?></div>
-          <h5><?= htmlspecialchars($car['name']) ?></h5>
-          <div class="tagline"><?= t_fmt('transfers.passenger_bags', ['passengers' => (int)$car['passenger_capacity'], 'bags' => (int)$car['luggage_capacity']], gaia_current_lang()) ?></div>
+          <div class="car-img">
+            <?php if ($cImg): ?>
+              <img src="<?= htmlspecialchars('/' . ltrim($cImg, '/')) ?>" alt="<?= htmlspecialchars($cName) ?>" style="max-height:64px; max-width:100%; object-fit:contain;">
+            <?php else: ?>
+              <?= carSVG($color) ?>
+            <?php endif; ?>
+          </div>
+          <h5><?= htmlspecialchars($cName) ?></h5>
+          <div class="tagline">
+            <?= t_fmt('transfers.passenger_bags', ['passengers' => (int)$car['passenger_capacity'], 'bags' => (int)$car['luggage_capacity']], gaia_current_lang()) ?>
+            <?php if ($cModels): ?>
+              <div style="font-size:11px; color:var(--muted); margin-top:2px;"><?= htmlspecialchars($cModels) ?></div>
+            <?php endif; ?>
+          </div>
           <div class="feat">
             <?php foreach ($carFeatures as $feat): ?>
               <span><i class="fa-solid fa-circle-check"></i> <?= htmlspecialchars($feat) ?></span>

@@ -71,14 +71,20 @@ $gaiaSwitchUrl = gaia_switch_lang_url($gaiaOther);
 $gaiaDir = gaia_dir();
 
 // Simple inline SVG icons
-function gaia_icon_globe() {
-    return '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a15 15 0 010 18 15 15 0 010-18z"/></svg>';
+if (!function_exists('gaia_icon_globe')) {
+    function gaia_icon_globe() {
+        return '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a15 15 0 010 18 15 15 0 010-18z"/></svg>';
+    }
 }
-function gaia_icon_whatsapp() {
-    return '<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12.04 2a9.9 9.9 0 00-8.5 15L2 22l5.1-1.5A9.9 9.9 0 1012.04 2zm5.8 14.1c-.24.68-1.4 1.3-1.93 1.35-.5.05-.98.24-3.3-.68-2.8-1.12-4.55-3.98-4.7-4.16-.14-.18-1.1-1.47-1.1-2.8 0-1.34.7-2 1.02-2.28.24-.2.54-.27.72-.27h.52c.18 0 .4-.05.65.5.25.56.85 1.96.93 2.1.08.14.13.3.02.5-.1.18-.16.3-.3.47-.14.17-.3.38-.43.5-.15.16-.3.33-.13.65.17.3.76 1.26 1.64 2.04 1.13 1 2.06 1.32 2.36 1.46.3.15.47.12.65-.07.17-.18.75-.87.94-1.17.2-.3.4-.25.67-.15.27.1 1.74.82 2.04.97.3.15.5.22.57.35.08.13.08.68-.16 1.33z"/></svg>';
+if (!function_exists('gaia_icon_whatsapp')) {
+    function gaia_icon_whatsapp() {
+        return '<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12.04 2a9.9 9.9 0 00-8.5 15L2 22l5.1-1.5A9.9 9.9 0 1012.04 2zm5.8 14.1c-.24.68-1.4 1.3-1.93 1.35-.5.05-.98.24-3.3-.68-2.8-1.12-4.55-3.98-4.7-4.16-.14-.18-1.1-1.47-1.1-2.8 0-1.34.7-2 1.02-2.28.24-.2.54-.27.72-.27h.52c.18 0 .4-.05.65.5.25.56.85 1.96.93 2.1.08.14.13.3.02.5-.1.18-.16.3-.3.47-.14.17-.3.38-.43.5-.15.16-.3.33-.13.65.17.3.76 1.26 1.64 2.04 1.13 1 2.06 1.32 2.36 1.46.3.15.47.12.65-.07.17-.18.75-.87.94-1.17.2-.3.4-.25.67-.15.27.1 1.74.82 2.04.97.3.15.5.22.57.35.08.13.08.68-.16 1.33z"/></svg>';
+    }
 }
-function gaia_icon_account() {
-    return '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 5-6 8-6s6.5 2 8 6"/></svg>';
+if (!function_exists('gaia_icon_account')) {
+    function gaia_icon_account() {
+        return '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 5-6 8-6s6.5 2 8 6"/></svg>';
+    }
 }
 ?>
 <header class="gaia-header <?= $gaia_header_style === 'overlay' ? 'gaia-header-overlay' : 'gaia-header-solid' ?> <?= gaia_is_rtl() ? 'gaia-header-rtl' : 'gaia-header-ltr' ?>" dir="<?= $gaiaDir ?>">
@@ -90,7 +96,7 @@ function gaia_icon_account() {
           : $gaia_base . '/assets/images/image.png';
     ?>
     <a class="gaia-header-logo" href="<?= gaia_url('index.php', $gaia_base) ?>">
-      <img src="<?= htmlspecialchars($gaiaLogoUrl) ?>" alt="<?= htmlspecialchars($gaia_company_short) ?>" class="gaia-logo-mark">
+      <img src="<?= ($gaiaLogoUrl) ?>" alt="<?= htmlspecialchars($gaia_company_short) ?>" class="gaia-logo-mark">
     </a>
 
     <nav class="gaia-nav" aria-label="Main navigation">
@@ -121,6 +127,10 @@ function gaia_icon_account() {
           <span><?= htmlspecialchars($gaiaAuthName) ?></span>
         </a>
       <?php else: ?>
+        <a class="gaia-header-account gaia-header-partner-btn" href="<?= gaia_url('partner/apply.php', $gaia_base) ?>" title="<?= htmlspecialchars(t('partner.join_title', 'Join as a Partner')) ?>">
+          <i class="fa-solid fa-handshake" style="font-size:14px;"></i>
+          <span><?= htmlspecialchars(t('partner.join', 'Join as a Partner')) ?></span>
+        </a>
         <a class="gaia-header-account gaia-header-login" href="<?= gaia_url('login.php', $gaia_base) ?>">
           <?= gaia_icon_account() ?><span><?= htmlspecialchars(t('auth.login')) ?></span>
         </a>
@@ -148,8 +158,8 @@ function gaia_icon_account() {
            href="<?= htmlspecialchars($item['url']) ?>"><?= htmlspecialchars($item['label']) ?></a>
       <?php endforeach; ?>
     </nav>
-<div class="gaia-mobile-actions">
-<?php if ($gaiaAuthed): ?>
+    <div class="gaia-mobile-actions">
+      <?php if ($gaiaAuthed): ?>
         <a class="gaia-btn gaia-btn-block gaia-btn-ghost" href="<?= gaia_url('account/bookings.php', $gaia_base) ?>"><?= htmlspecialchars(t('account.my_bookings')) ?><?php if ($gaiaBookingCount > 0): ?> (<?= (int)$gaiaBookingCount ?>)<?php endif; ?></a>
         <a class="gaia-btn gaia-btn-block gaia-btn-ghost" href="<?= gaia_url('account/index.php', $gaia_base) ?>"><?= htmlspecialchars(t('header.my_account')) ?></a>
         <form method="post" action="<?= htmlspecialchars(gaia_url('logout.php', $gaia_base)) ?>" style="margin:0;">
@@ -157,6 +167,9 @@ function gaia_icon_account() {
           <button type="submit" class="gaia-btn gaia-btn-block" style="width:100%;border:none;cursor:pointer;"><?= htmlspecialchars(t('auth.logout')) ?></button>
         </form>
       <?php else: ?>
+        <a class="gaia-btn gaia-btn-block gaia-btn-ghost" href="<?= gaia_url('partner/apply.php', $gaia_base) ?>" style="margin-bottom:8px;">
+          <i class="fa-solid fa-handshake"></i> <?= htmlspecialchars(t('partner.join', 'Join as a Partner')) ?>
+        </a>
         <a class="gaia-btn gaia-btn-block gaia-btn-ghost" href="<?= gaia_url('login.php', $gaia_base) ?>"><?= htmlspecialchars(t('auth.login')) ?></a>
         <a class="gaia-btn gaia-btn-block" href="<?= gaia_url('register.php', $gaia_base) ?>"><?= htmlspecialchars(t('auth.register')) ?></a>
       <?php endif; ?>

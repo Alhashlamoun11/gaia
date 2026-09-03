@@ -7,7 +7,7 @@ $hotel_page_title = t('hotel.reviews', 'Reviews');
 
 $pdo = getPDO();
 
-$stmt = $pdo->prepare("SELECT r.*, u.first_name, u.last_name FROM reviews r LEFT JOIN users u ON r.user_id = u.id WHERE r.module_type = 'hotel' AND r.module_id = ? ORDER BY r.id DESC");
+$stmt = $pdo->prepare("SELECT r.* FROM hotel_reviews r WHERE r.hotel_id = ? ORDER BY r.id DESC");
 $stmt->execute([$my_hotel_id]);
 $reviews = $stmt->fetchAll();
 
@@ -21,17 +21,19 @@ require __DIR__ . '/components/header.php';
       <?php require __DIR__ . '/components/alert.php'; ?>
 
       <div class="toolbar">
-        <h2>Guest Reviews</h2>
+        <h2>Guest Reviews & Feedback</h2>
+        <div class="spacer" style="flex:1;"></div>
+        <span style="font-size:13px; color:var(--muted); font-weight:600;"><?= count($reviews) ?> Total Reviews</span>
       </div>
 
-      <div class="card" style="padding:0;">
-        <div class="table-wrap">
+      <div class="card" style="padding:0; overflow:hidden;">
+        <div class="table-wrap" style="box-shadow:none; border:none;">
           <table>
             <thead>
               <tr>
                 <th>Guest</th>
                 <th>Rating</th>
-                <th>Review</th>
+                <th>Review Content</th>
                 <th>Status</th>
                 <th>Date</th>
               </tr>
@@ -39,29 +41,29 @@ require __DIR__ . '/components/header.php';
             <tbody>
               <?php foreach($reviews as $r): ?>
                 <tr>
-                  <td><strong><?= htmlspecialchars($r['first_name'] . ' ' . $r['last_name']) ?></strong></td>
+                  <td><strong><?= htmlspecialchars($r['reviewer'] ?? 'Guest') ?></strong></td>
                   <td><span class="status-badge gold"><i class="fa-solid fa-star"></i> <?= (int)$r['rating'] ?>/5</span></td>
-                  <td style="max-width:300px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" title="<?= htmlspecialchars($r['comment']) ?>"><?= htmlspecialchars($r['comment']) ?></td>
+                  <td style="max-width:320px; white-space:normal; line-height:1.4;"><?= htmlspecialchars($r['text'] ?? '') ?></td>
                   <td>
-                    <?php if($r['status'] === 'approved'): ?>
+                    <?php if(!empty($r['is_active'])): ?>
                       <span class="status-badge green">Approved</span>
-                    <?php elseif($r['status'] === 'rejected'): ?>
-                      <span class="status-badge red">Rejected</span>
                     <?php else: ?>
                       <span class="status-badge gray">Pending</span>
                     <?php endif; ?>
                   </td>
-                  <td><small style="color:var(--muted);"><?= htmlspecialchars($r['created_at']) ?></small></td>
+                  <td><small style="color:var(--muted); white-space:nowrap;"><?= htmlspecialchars($r['created_at']) ?></small></td>
                 </tr>
               <?php endforeach; ?>
               <?php if(!$reviews): ?>
-                <tr><td colspan="5"><div class="muted" style="text-align:center;padding:18px;">No reviews found.</div></td></tr>
+                <tr><td colspan="5"><div class="muted" style="text-align:center;padding:24px;">No reviews recorded yet.</div></td></tr>
               <?php endif; ?>
             </tbody>
           </table>
         </div>
       </div>
-      <p style="color:var(--muted); font-size:12.5px; margin-top:12px;"><i class="fa-solid fa-info-circle"></i> Reviews are moderated by Super Admins before being published publicly.</p>
+      <p style="color:var(--muted); font-size:12.5px; margin-top:12px; display:flex; align-items:center; gap:6px;">
+        <i class="fa-solid fa-circle-info"></i> Reviews are moderated by Super Admins before being published publicly.
+      </p>
 
     </div>
   </div>

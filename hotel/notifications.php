@@ -30,28 +30,30 @@ require __DIR__ . '/components/header.php';
       <?php require __DIR__ . '/components/alert.php'; ?>
 
       <div class="toolbar">
-        <h2>Notifications</h2>
+        <h2>Notifications & Alerts</h2>
         <div class="spacer" style="flex:1;"></div>
-        <form method="post" action="notifications.php" style="margin:0;">
-          <?= csrf_field() ?>
-          <input type="hidden" name="mark_read" value="1">
-          <button type="submit" class="btn btn-ghost btn-sm"><i class="fa-solid fa-check-double"></i> Mark all as read</button>
-        </form>
+        <?php if (!empty($notifications)): ?>
+          <form method="post" action="notifications.php" style="margin:0;">
+            <?= csrf_field() ?>
+            <input type="hidden" name="mark_read" value="1">
+            <button type="submit" class="btn btn-ghost btn-sm"><i class="fa-solid fa-check-double"></i> Mark all as read</button>
+          </form>
+        <?php endif; ?>
       </div>
 
-      <div class="card" style="padding:0;">
+      <div class="card" style="padding:0; overflow:hidden;">
         <ul style="list-style:none; padding:0; margin:0;">
           <?php foreach($notifications as $n): ?>
             <li style="padding:16px 20px; border-bottom:1px solid var(--line); <?= !$n['is_read'] ? 'background-color:#fbfaf7; border-left:4px solid var(--teal);' : '' ?>">
-              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
-                <h4 style="font-size:15px; margin:0; font-family:'Inter', sans-serif; font-weight:600;"><?= htmlspecialchars($n['title']) ?></h4>
-                <small style="color:var(--muted); font-size:12px;"><?= htmlspecialchars($n['created_at']) ?></small>
+              <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:6px; gap:12px; flex-wrap:wrap;">
+                <h4 style="font-size:14.5px; margin:0; font-family:'Inter', sans-serif; font-weight:700; color:var(--ink);"><?= htmlspecialchars($n['title']) ?></h4>
+                <small style="color:var(--muted); font-size:11.5px; white-space:nowrap;"><?= htmlspecialchars($n['created_at']) ?></small>
               </div>
-              <p style="margin:0; color:var(--muted); font-size:13.5px;"><?= htmlspecialchars($n['message']) ?></p>
+              <p style="margin:0; color:var(--muted); font-size:13.5px; line-height:1.45;"><?= htmlspecialchars($n['message']) ?></p>
             </li>
           <?php endforeach; ?>
           <?php if(!$notifications): ?>
-            <li style="padding:24px; text-align:center; color:var(--muted);">No notifications right now.</li>
+            <li style="padding:28px; text-align:center; color:var(--muted);">No notifications right now.</li>
           <?php endif; ?>
         </ul>
       </div>

@@ -11,16 +11,21 @@ function _hotel_nav_item($key, $icon, $label, $url, $active)
 {
     $class = $key === $active ? ' class="active"' : '';
     $href  = htmlspecialchars($url);
-    return '<a href="' . $href . '"' . $class . '><i class="fa-solid ' . $icon . '"></i> ' . htmlspecialchars($label) . '</a>';
+    return '<a href="' . $href . '"' . $class . '><i class="fa-solid ' . $icon . '"></i> <span>' . htmlspecialchars($label) . '</span></a>';
 }
 ?>
 <aside class="admin-sidebar" id="adminSidebar">
   <div class="admin-sidebar-brand">
-    <span class="mark"><?= htmlspecialchars(site_setting('company_logo_mark', 'G')) ?></span>
-    <span class="txt">
-      <strong><?= htmlspecialchars(site_setting('company_short', 'GAIA')) ?></strong>
-      <span style="font-weight:600; color:#1f6f8f; text-overflow:ellipsis; overflow:hidden; white-space:nowrap; max-width:140px;" title="<?= htmlspecialchars($hotelName) ?>"><?= htmlspecialchars($hotelName) ?></span>
-    </span>
+    <div class="admin-sidebar-brand-inner">
+      <span class="mark"><?= htmlspecialchars(site_setting('company_logo_mark', 'G')) ?></span>
+      <span class="txt">
+        <strong><?= htmlspecialchars(site_setting('company_short', 'GAIA')) ?></strong>
+        <span title="<?= htmlspecialchars($hotelName) ?>"><?= htmlspecialchars($hotelName) ?></span>
+      </span>
+    </div>
+    <button type="button" class="admin-sidebar-close" id="adminSidebarClose" aria-label="Close sidebar">
+      <i class="fa-solid fa-xmark"></i>
+    </button>
   </div>
 
   <nav class="admin-sidebar-nav">

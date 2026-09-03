@@ -36,19 +36,20 @@ require __DIR__ . '/components/header.php';
       <?php require __DIR__ . '/components/alert.php'; ?>
 
       <div class="toolbar">
-        <h2>Manage Rooms</h2>
+        <h2>Room Types & Categories</h2>
         <div class="spacer" style="flex:1;"></div>
-        <a href="room-form.php" class="btn btn-primary"><i class="fa-solid fa-plus"></i> Add Room</a>
+        <a href="room-form.php" class="btn btn-primary"><i class="fa-solid fa-plus"></i> Add New Room</a>
       </div>
 
-      <div class="card" style="padding:0;">
-        <div class="table-wrap">
+      <div class="card" style="padding:0; overflow:hidden;">
+        <div class="table-wrap" style="box-shadow:none; border:none;">
           <table>
             <thead>
               <tr>
                 <th>Room Name</th>
                 <th>Capacity</th>
-                <th>Price</th>
+                <th>Units</th>
+                <th>Rate / Night</th>
                 <th>Status</th>
                 <th>Actions</th>
               </tr>
@@ -56,9 +57,15 @@ require __DIR__ . '/components/header.php';
             <tbody>
               <?php foreach($rooms as $r): ?>
                 <tr>
-                  <td><strong><?= htmlspecialchars($r['name']) ?></strong></td>
+                  <td>
+                    <div style="font-weight:700; color:var(--ink);"><?= htmlspecialchars($r['name']) ?></div>
+                    <?php if (!empty($r['beds'])): ?>
+                      <div style="font-size:11.5px; color:var(--muted);"><i class="fa-solid fa-bed"></i> <?= htmlspecialchars($r['beds']) ?></div>
+                    <?php endif; ?>
+                  </td>
                   <td><?= (int)$r['capacity'] ?> Guests</td>
-                  <td>$<?= number_format($r['price'], 2) ?></td>
+                  <td style="font-weight:600;"><?= (int)$r['quantity'] ?></td>
+                  <td><strong style="color:var(--teal);">$<?= number_format($r['price'], 2) ?></strong></td>
                   <td>
                     <?php if($r['is_active']): ?>
                       <span class="status-badge green">Active</span>
@@ -67,20 +74,20 @@ require __DIR__ . '/components/header.php';
                     <?php endif; ?>
                   </td>
                   <td>
-                    <div style="display:flex; gap:8px;">
-                      <a href="room-form.php?id=<?= $r['id'] ?>" class="btn btn-sm btn-ghost"><i class="fa-solid fa-pen"></i></a>
-                      <form method="post" action="rooms.php" onsubmit="return confirm('Delete this room?');">
+                    <div class="actions">
+                      <a href="room-form.php?id=<?= $r['id'] ?>" class="icon-btn" title="Edit Room"><i class="fa-solid fa-pen"></i></a>
+                      <form method="post" action="rooms.php" onsubmit="return confirm('Delete this room category?');" style="margin:0;">
                         <?= csrf_field() ?>
                         <input type="hidden" name="action" value="delete">
                         <input type="hidden" name="id" value="<?= $r['id'] ?>">
-                        <button type="submit" class="btn btn-sm btn-danger"><i class="fa-solid fa-trash"></i></button>
+                        <button type="submit" class="icon-btn danger" title="Delete Room"><i class="fa-solid fa-trash"></i></button>
                       </form>
                     </div>
                   </td>
                 </tr>
               <?php endforeach; ?>
               <?php if(!$rooms): ?>
-                <tr><td colspan="5"><div class="muted" style="text-align:center;padding:18px;">No rooms found. Add your first room.</div></td></tr>
+                <tr><td colspan="6"><div class="muted" style="text-align:center;padding:24px;">No rooms found. Add your first room category.</div></td></tr>
               <?php endif; ?>
             </tbody>
           </table>

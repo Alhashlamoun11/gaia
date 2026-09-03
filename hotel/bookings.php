@@ -20,21 +20,23 @@ require __DIR__ . '/components/header.php';
     <div class="admin-content">
       <?php require __DIR__ . '/components/alert.php'; ?>
 
-      <div class="card">
-        <div class="card-head">
-          <h2>Bookings</h2>
-        </div>
-        <div class="table-wrap">
+      <div class="toolbar">
+        <h2>Guest Reservations</h2>
+        <div class="spacer" style="flex:1;"></div>
+        <span style="font-size:13px; color:var(--muted); font-weight:600;"><?= count($bookings) ?> Total Bookings</span>
+      </div>
+
+      <div class="card" style="padding:0; overflow:hidden;">
+        <div class="table-wrap" style="box-shadow:none; border:none;">
           <table>
             <thead>
               <tr>
-                <th>Ref</th>
+                <th>Reference</th>
                 <th>Guest</th>
                 <th>Room</th>
-                <th>Check-in</th>
-                <th>Check-out</th>
-                <th>Amount</th>
-                <th><?= htmlspecialchars(t('hotel.rooms_label', 'Rooms')) ?></th>
+                <th>Stay Dates</th>
+                <th>Total</th>
+                <th style="text-align:center;"><?= htmlspecialchars(t('hotel.rooms_label', 'Qty')) ?></th>
                 <th>Status</th>
                 <th>Actions</th>
               </tr>
@@ -42,12 +44,17 @@ require __DIR__ . '/components/header.php';
             <tbody>
               <?php foreach($bookings as $b): ?>
                 <tr>
-                  <td><strong><?= htmlspecialchars($b['booking_code']) ?></strong></td>
-                  <td><?= htmlspecialchars($b['guest_name']) ?></td>
+                  <td><strong style="font-family:monospace; font-size:13px;"><?= htmlspecialchars($b['booking_code']) ?></strong></td>
+                  <td>
+                    <div style="font-weight:700; color:var(--ink);"><?= htmlspecialchars($b['guest_name']) ?></div>
+                    <div style="font-size:11.5px; color:var(--muted);"><?= htmlspecialchars($b['guest_email'] ?: '') ?></div>
+                  </td>
                   <td><?= htmlspecialchars($b['room_name']) ?></td>
-                  <td><?= htmlspecialchars($b['check_in_date']) ?></td>
-                  <td><?= htmlspecialchars($b['check_out_date']) ?></td>
-                  <td>$<?= number_format($b['total_price'], 2) ?></td>
+                  <td>
+                    <div style="font-weight:600; font-size:13px;"><?= htmlspecialchars($b['check_in_date']) ?></div>
+                    <div style="font-size:11px; color:var(--muted);">to <?= htmlspecialchars($b['check_out_date']) ?></div>
+                  </td>
+                  <td><strong>$<?= number_format($b['total_price'], 2) ?></strong></td>
                   <td style="text-align:center; font-weight:600;"><?= (int)($b['rooms_count'] ?? 1) ?></td>
                   <td>
                     <?php
@@ -67,7 +74,7 @@ require __DIR__ . '/components/header.php';
                 </tr>
               <?php endforeach; ?>
               <?php if(!$bookings): ?>
-                <tr><td colspan="9"><div class="muted" style="text-align:center;padding:18px;">No bookings found.</div></td></tr>
+                <tr><td colspan="8"><div class="muted" style="text-align:center;padding:24px;">No reservations found.</div></td></tr>
               <?php endif; ?>
             </tbody>
           </table>

@@ -52,8 +52,10 @@ require __DIR__ . '/components/header.php';
       <?php require __DIR__ . '/components/alert.php'; ?>
 
       <div class="toolbar">
-        <a href="bookings.php" class="btn btn-ghost btn-sm"><i class="fa-solid fa-arrow-left"></i></a>
-        <h2>Booking #<?= htmlspecialchars($booking['booking_code']) ?></h2>
+        <div style="display:flex; align-items:center; gap:10px;">
+          <a href="bookings.php" class="btn btn-ghost btn-sm" aria-label="Back to bookings"><i class="fa-solid fa-arrow-left"></i></a>
+          <h2>Booking #<?= htmlspecialchars($booking['booking_code']) ?></h2>
+        </div>
         <div class="spacer" style="flex:1;"></div>
         <?php
            $c = match($booking['status']){
@@ -67,29 +69,29 @@ require __DIR__ . '/components/header.php';
         <span class="status-badge <?= $c ?>"><?= strtoupper($booking['status']) ?></span>
       </div>
 
-      <div class="form-grid" style="display:grid; grid-template-columns:2fr 1fr; gap:24px; align-items:start;">
+      <div class="detail-grid">
         <div>
-          <div class="card" style="margin-bottom:24px;">
-            <h3>Booking Details</h3>
-            <div class="table-wrap" style="box-shadow:none; border:none;">
+          <div class="card" style="margin-bottom:20px;">
+            <h3><i class="fa-solid fa-circle-info"></i> Booking Details</h3>
+            <div class="table-wrap" style="box-shadow:none; border:1px solid var(--line);">
               <table>
-                <tr><th style="background:#f9f9f9; width:200px;">Reference</th><td><?= htmlspecialchars($booking['booking_code']) ?></td></tr>
-                <tr><th style="background:#f9f9f9;">Room Type</th><td><?= htmlspecialchars($booking['room_name']) ?></td></tr>
-                <tr><th style="background:#f9f9f9;">Guest Name</th><td><?= htmlspecialchars($booking['guest_name']) ?></td></tr>
-                <tr><th style="background:#f9f9f9;">Contact Email</th><td><?= htmlspecialchars($booking['guest_email'] ?: $booking['user_email']) ?></td></tr>
-                <tr><th style="background:#f9f9f9;">Phone</th><td><?= htmlspecialchars($booking['guest_phone']) ?></td></tr>
-                <tr><th style="background:#f9f9f9;">Check-in</th><td><?= htmlspecialchars($booking['check_in_date']) ?></td></tr>
-                <tr><th style="background:#f9f9f9;">Check-out</th><td><?= htmlspecialchars($booking['check_out_date']) ?></td></tr>
-                <tr><th style="background:#f9f9f9;"><?= htmlspecialchars(t('hotel.rooms_booked', 'Rooms Booked')) ?></th><td><strong><?= (int)($booking['rooms_count'] ?? 1) ?></strong></td></tr>
-                <tr><th style="background:#f9f9f9;"><?= htmlspecialchars(t('hotel.guests_label', 'Guests')) ?></th><td><?= (int)($booking['guests'] ?? 1) ?></td></tr>
-                <tr><th style="background:#f9f9f9;"><?= htmlspecialchars(t('admin.admin_commission', 'Admin Commission')) ?></th><td><strong><?= htmlspecialchars($booking['admin_commission_percent']) ?>%</strong></td></tr>
-                <tr><th style="background:#f9f9f9;">Total Price</th><td><strong>$<?= number_format($booking['total_price'], 2) ?></strong></td></tr>
+                <tr><th style="background:#fbfaf7; width:35%; min-width:110px;">Reference</th><td><strong><?= htmlspecialchars($booking['booking_code']) ?></strong></td></tr>
+                <tr><th style="background:#fbfaf7;">Room Type</th><td><?= htmlspecialchars($booking['room_name']) ?></td></tr>
+                <tr><th style="background:#fbfaf7;">Guest Name</th><td><?= htmlspecialchars($booking['guest_name']) ?></td></tr>
+                <tr><th style="background:#fbfaf7;">Contact Email</th><td><a href="mailto:<?= htmlspecialchars($booking['guest_email'] ?: $booking['user_email']) ?>" class="btn-link"><?= htmlspecialchars($booking['guest_email'] ?: $booking['user_email']) ?></a></td></tr>
+                <tr><th style="background:#fbfaf7;">Phone</th><td><?= htmlspecialchars($booking['guest_phone']) ?></td></tr>
+                <tr><th style="background:#fbfaf7;">Check-in</th><td><?= htmlspecialchars($booking['check_in_date']) ?></td></tr>
+                <tr><th style="background:#fbfaf7;">Check-out</th><td><?= htmlspecialchars($booking['check_out_date']) ?></td></tr>
+                <tr><th style="background:#fbfaf7;"><?= htmlspecialchars(t('hotel.rooms_booked', 'Rooms Booked')) ?></th><td><strong><?= (int)($booking['rooms_count'] ?? 1) ?></strong></td></tr>
+                <tr><th style="background:#fbfaf7;"><?= htmlspecialchars(t('hotel.guests_label', 'Guests')) ?></th><td><?= (int)($booking['guests'] ?? 1) ?></td></tr>
+                <tr><th style="background:#fbfaf7;"><?= htmlspecialchars(t('admin.admin_commission', 'Admin Commission')) ?></th><td><strong><?= htmlspecialchars($booking['admin_commission_percent']) ?>%</strong></td></tr>
+                <tr><th style="background:#fbfaf7;">Total Price</th><td><strong style="color:var(--teal); font-size:16px;">$<?= number_format($booking['total_price'], 2) ?></strong></td></tr>
               </table>
             </div>
           </div>
 
           <div class="card">
-            <h3>Timeline Logs</h3>
+            <h3><i class="fa-solid fa-clock-rotate-left"></i> Timeline Logs</h3>
             <?php if($timeline): ?>
               <ul style="list-style:none; padding:0; margin:0;">
                 <?php foreach($timeline as $l): ?>
@@ -106,12 +108,13 @@ require __DIR__ . '/components/header.php';
         </div>
 
         <div>
-          <div class="card" style="background:var(--bg-soft);">
-            <h3>Update Status</h3>
+          <div class="card" style="background:#fff;">
+            <h3><i class="fa-solid fa-sliders"></i> Update Status</h3>
             <form method="post" action="booking.php?id=<?= $id ?>">
               <?= csrf_field() ?>
               <div class="field">
-                <select name="status" style="width:100%; margin-bottom:16px; padding:10px; border:1px solid var(--line); border-radius:10px;">
+                <label for="statusSelect">Reservation Status</label>
+                <select id="statusSelect" name="status" style="width:100%; margin-bottom:16px; padding:11px 14px; border:1px solid var(--line); border-radius:10px; font-weight:600;">
                   <option value="pending" <?= $booking['status']==='pending'?'selected':'' ?>>Pending</option>
                   <option value="confirmed" <?= $booking['status']==='confirmed'?'selected':'' ?>>Confirmed</option>
                   <option value="completed" <?= $booking['status']==='completed'?'selected':'' ?>>Completed</option>

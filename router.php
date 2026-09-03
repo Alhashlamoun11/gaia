@@ -21,13 +21,14 @@
  * ------------------------------------------------------------
  */
 
-$uri = urldecode(parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH));
+$uri = urldecode(parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH));
 $q   = $_GET; // existing query params (QSA)
 
 /**
  * Rewrite the path to a target script + merge query params.
  * Returns false when no rewrite applies (fall through to static).
  */
+if (!function_exists('rewrite')) {
 function rewrite($path, $query)
 {
     // Normalise trailing slash
@@ -72,6 +73,9 @@ function rewrite($path, $query)
     }
     if (preg_match('#^/(en|ar)/events$#', $p, $m)) {
         $query['lang'] = $m[1];
+        if (!empty($query['slug'])) {
+            return ['events.php', $query];
+        }
         return ['gaia-night.php', $query];
     }
     if (preg_match('#^/(en|ar)/reviews$#', $p, $m)) {
@@ -83,7 +87,7 @@ function rewrite($path, $query)
         if (!empty($query['slug'])) {
             return ['hotel.php', $query];
         }
-        return ['index.php', $query];
+        return ['search-hotels.php', $query];
     }
     if (preg_match('#^/(en|ar)/search-hotels$#', $p, $m)) {
         $query['lang'] = $m[1];
@@ -94,13 +98,13 @@ function rewrite($path, $query)
         if (!empty($query['id'])) {
             return ['room.php', $query];
         }
-        return ['index.php', $query];
+        return ['search-hotels.php', $query];
     }
-    if (preg_match('#^/(en|ar)/transfers$#', $p, $m)) {
+    if (preg_match('#^/(en|ar)/(transfers?|transfer-booking|transportation)$#', $p, $m)) {
         $query['lang'] = $m[1];
-        return ['route.php', $query];
+        return ['transfer-booking.php', $query];
     }
-    if (preg_match('#^/(en|ar)/(route|transfer-booking)$#', $p, $m)) {
+    if (preg_match('#^/(en|ar)/route$#', $p, $m)) {
         $query['lang'] = $m[1];
         return ['route.php', $query];
     }
@@ -108,7 +112,11 @@ function rewrite($path, $query)
         $query['lang'] = $m[1];
         return ['checkout.php', $query];
     }
-if (preg_match('#^/(en|ar)/(about|contact)$#', $p, $m)) {
+    if (preg_match('#^/(en|ar)/partner/apply(\.php)?$#', $p, $m)) {
+        $query['lang'] = $m[1];
+        return ['partner/apply.php', $query];
+    }
+    if (preg_match('#^/(en|ar)/(about|contact|terms-and-conditions|privacy-policy|refund-policy)$#', $p, $m)) {
         $query['lang'] = $m[1];
         $query['slug'] = $m[2];
         return ['page.php', $query];
@@ -147,6 +155,23 @@ if (preg_match('#^/(en|ar)/account/(dashboard|bookings|payments|invoices|profile
     if (preg_match('#^/(en|ar)/account$#', $p, $m)) {
         $query['lang'] = $m[1];
         return ['account/index.php', $query];
+    }
+    // Admin routes with language prefix
+    if (preg_match('#^/(en|ar)/admin(?:/(.*))?$#', $p, $m)) {
+        $query['lang'] = $m[1];
+        $sub = trim($m[2] ?? '', '/');
+        if ($sub === '' || $sub === 'index.php') {
+            return ['admin/index.php', $query];
+        }
+        if (substr($sub, -4) !== '.php' && strpos($sub, '.') === false) {
+            if (file_exists(__DIR__ . '/admin/' . $sub . '/index.php')) {
+                return ['admin/' . $sub . '/index.php', $query];
+            }
+            if (file_exists(__DIR__ . '/admin/' . $sub . '.php')) {
+                return ['admin/' . $sub . '.php', $query];
+            }
+        }
+        return ['admin/' . $sub, $query];
     }
     // Homepage with language prefix
     if (preg_match('#^/(en|ar)$#', $p, $m)) {
@@ -187,15 +212,17 @@ if (preg_match('#^/(en|ar)/account/(dashboard|bookings|payments|invoices|profile
     if ($p === '/checkout') {
         return ['checkout.php', $query];
     }
-    if ($p === '/transfer-booking' || $p === '/transfers' || $p === '/route') {
+    if ($p === '/transfer-booking' || $p === '/transfers' || $p === '/transfer' || $p === '/transportation') {
+        return ['transfer-booking.php', $query];
+    }
+    if ($p === '/route') {
         return ['route.php', $query];
     }
-    if ($p === '/about') {
-        $query['slug'] = 'about';
-        return ['page.php', $query];
+    if ($p === '/partner/apply' || $p === '/partner/apply.php') {
+        return ['partner/apply.php', $query];
     }
-    if ($p === '/contact') {
-        $query['slug'] = 'contact';
+    if (preg_match('#^/(about|contact|terms-and-conditions|privacy-policy|refund-policy)$#', $p, $m)) {
+        $query['slug'] = $m[1];
         return ['page.php', $query];
     }
     // Auth & account (non-prefixed, default English)
@@ -227,13 +254,19 @@ if (preg_match('#^/(en|ar)/account/(dashboard|bookings|payments|invoices|profile
         if ($p === '/rooms' && !empty($query['id'])) {
             return ['room.php', $query];
         }
+        if ($p === '/hotels' || $p === '/rooms') {
+            return ['search-hotels.php', $query];
+        }
         return ['index.php', $query];
     }
     if ($p === '/search-hotels') {
         return ['search-hotels.php', $query];
     }
-    // Anchor section that lives on the GAIA Night page
+    // Anchor section that lives on the GAIA Night page (or event detail if slug passed)
     if ($p === '/events') {
+        if (!empty($query['slug'])) {
+            return ['events.php', $query];
+        }
         return ['gaia-night.php', $query];
     }
 
@@ -247,6 +280,7 @@ if (preg_match('#^/(en|ar)/account/(dashboard|bookings|payments|invoices|profile
     }
 
     return false;
+}
 }
 
 $target = rewrite($uri, $q);

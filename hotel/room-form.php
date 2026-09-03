@@ -109,8 +109,10 @@ require __DIR__ . '/components/header.php';
       <?php require __DIR__ . '/components/alert.php'; ?>
 
       <div class="toolbar">
-        <a href="rooms.php" class="btn btn-ghost btn-sm"><i class="fa-solid fa-arrow-left"></i></a>
-        <h2><?= $id ? 'Edit Room' : 'Add Room' ?></h2>
+        <div style="display:flex; align-items:center; gap:10px;">
+          <a href="rooms.php" class="btn btn-ghost btn-sm" aria-label="Back to rooms list"><i class="fa-solid fa-arrow-left"></i></a>
+          <h2><?= $id ? 'Edit Room' : 'Add Room' ?></h2>
+        </div>
       </div>
 
       <div class="card">
@@ -120,13 +122,13 @@ require __DIR__ . '/components/header.php';
             <input type="hidden" name="id" value="<?= $id ?>">
           <?php endif; ?>
           
-          <div class="form-grid" style="display:grid; grid-template-columns:2fr 1fr 1fr 1fr; gap:16px;">
+          <div class="form-grid-4">
             <div class="field">
               <label>Room Name <span style="color:#b3261e">*</span></label>
-              <input type="text" name="name" value="<?= htmlspecialchars((string)($room['name'] ?? '')) ?>" required>
+              <input type="text" name="name" value="<?= htmlspecialchars((string)($room['name'] ?? '')) ?>" required placeholder="e.g. Deluxe Ocean Suite">
             </div>
             <div class="field">
-              <label>Price <span style="color:#b3261e">*</span></label>
+              <label>Price ($/night) <span style="color:#b3261e">*</span></label>
               <input type="number" step="0.01" name="price" value="<?= htmlspecialchars((string)($room['price'] ?? '0.00')) ?>" required>
             </div>
             <div class="field">
@@ -139,46 +141,44 @@ require __DIR__ . '/components/header.php';
             </div>
           </div>
 
-          <div class="form-grid" style="display:grid; grid-template-columns:1fr; gap:16px; margin-top:16px;">
-            <div class="field">
-              <label>Bed Configuration</label>
-              <input type="text" name="beds" value="<?= htmlspecialchars((string)($room['beds'] ?? '')) ?>" placeholder="e.g. 1 King Bed, 2 Single Beds">
-            </div>
-
-            <div class="field">
-              <label>Description</label>
-              <textarea name="description" rows="4"><?= htmlspecialchars((string)($room['description'] ?? '')) ?></textarea>
-            </div>
-
-            <div class="field">
-              <label>Facilities (comma separated)</label>
-              <textarea name="facilities" rows="2" placeholder="WiFi, AC, Minibar, TV..."><?= htmlspecialchars((string)($room['facilities'] ?? '')) ?></textarea>
-            </div>
-
-            <div class="field" style="display:flex; align-items:center; gap:8px;">
-              <input type="checkbox" name="is_active" id="is_active" value="1" <?= (!$id || !empty($room['is_active'])) ? 'checked' : '' ?> style="width:auto; margin:0;">
-              <label for="is_active" style="margin:0;">Room is Active (Bookable)</label>
-            </div>
+          <div class="field" style="margin-top:10px;">
+            <label>Bed Configuration</label>
+            <input type="text" name="beds" value="<?= htmlspecialchars((string)($room['beds'] ?? '')) ?>" placeholder="e.g. 1 King Bed, 2 Single Beds">
           </div>
 
-          <h3 style="margin-top:30px; margin-bottom:20px;">Media</h3>
-          <div class="form-grid" style="display:grid; grid-template-columns:1fr 1fr; gap:24px; margin-bottom:24px;">
+          <div class="field">
+            <label>Description</label>
+            <textarea name="description" rows="4"><?= htmlspecialchars((string)($room['description'] ?? '')) ?></textarea>
+          </div>
+
+          <div class="field">
+            <label>Facilities (comma separated)</label>
+            <textarea name="facilities" rows="2" placeholder="WiFi, AC, Minibar, TV..."><?= htmlspecialchars((string)($room['facilities'] ?? '')) ?></textarea>
+          </div>
+
+          <div class="field" style="display:flex; align-items:center; gap:8px;">
+            <input type="checkbox" name="is_active" id="is_active" value="1" <?= (!$id || !empty($room['is_active'])) ? 'checked' : '' ?> style="width:auto; margin:0; cursor:pointer;">
+            <label for="is_active" style="margin:0; cursor:pointer;">Room is Active (Bookable on GAIA)</label>
+          </div>
+
+          <h3 style="margin-top:28px; margin-bottom:18px;"><i class="fa-solid fa-images"></i> Media</h3>
+          <div class="media-upload-grid" style="margin-bottom:24px;">
             
             <div class="field">
               <label>Room Main Image</label>
               <?php if (!empty($room['image_url'])): ?>
                 <div style="margin-bottom:10px;">
-                    <img src="<?= htmlspecialchars('/' . ltrim($room['image_url'], '/')) ?>" alt="Main Image" style="max-width:100%; max-height:200px; border-radius:8px; border:1px solid var(--line);">
+                    <img src="<?= htmlspecialchars('/' . ltrim($room['image_url'], '/')) ?>" alt="Main Image" style="max-width:100%; max-height:180px; border-radius:8px; border:1px solid var(--line); object-fit:cover;">
                 </div>
               <?php endif; ?>
               <input type="file" name="main_image" accept="image/jpeg,image/png,image/webp">
-              <small class="muted" style="display:block; margin-top:5px;">Select a new image to replace the current one.</small>
+              <small class="hint">Select a new image to replace the current one.</small>
             </div>
 
             <div class="field">
               <label>Add Gallery Images</label>
               <input type="file" name="gallery_images[]" accept="image/jpeg,image/png,image/webp" multiple>
-              <small class="muted" style="display:block; margin-top:5px;">You can select multiple images to upload.</small>
+              <small class="hint">You can select multiple images to upload.</small>
             </div>
           </div>
 
@@ -193,13 +193,13 @@ require __DIR__ . '/components/header.php';
             $gallery = json_decode((string)$room['gallery_urls'] ?: '[]', true) ?: [];
             if (!empty($gallery)):
       ?>
-      <div class="card" style="margin-top:24px;">
-        <h3 style="margin-bottom:20px;">Room Gallery</h3>
-        <div style="display:flex; flex-wrap:wrap; gap:16px;">
+      <div class="card" style="margin-top:20px;">
+        <h3 style="margin-bottom:18px;"><i class="fa-solid fa-photo-film"></i> Room Gallery</h3>
+        <div class="gallery-preview-grid">
             <?php foreach($gallery as $img): ?>
-                <div style="position:relative; width:150px; height:150px; border:1px solid var(--line); border-radius:8px; overflow:hidden;">
-                    <img src="<?= htmlspecialchars('/' . ltrim($img, '/')) ?>" style="width:100%; height:100%; object-fit:cover;">
-                    <form method="post" action="room-form.php?id=<?= $id ?>" style="position:absolute; top:5px; right:5px;">
+                <div class="gallery-preview-item">
+                    <img src="<?= htmlspecialchars('/' . ltrim($img, '/')) ?>" alt="Room Image" loading="lazy">
+                    <form method="post" action="room-form.php?id=<?= $id ?>">
                         <?= csrf_field() ?>
                         <input type="hidden" name="action" value="remove_gallery">
                         <input type="hidden" name="remove_url" value="<?= htmlspecialchars($img) ?>">
