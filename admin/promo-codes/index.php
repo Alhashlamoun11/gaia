@@ -76,10 +76,10 @@ $C = fn($v)=>htmlspecialchars((string)($v ?? ''));
         <div class="table-wrap">
           <table>
             <thead><tr>
-              <th><?= $C(AdminQuery::sortLink('code', t('admin.code','Code'), ['id','code','discount_type','discount_value','max_uses'], 'code')) ?></th>
+              <th><?= AdminQuery::sortLink('code', t('admin.code','Code'), ['id','code','discount_type','discount_value','max_uses'], 'code') ?></th>
               <th><?= $C(t('admin.type','Type')) ?></th>
-              <th><?= $C(AdminQuery::sortLink('discount_value', t('admin.value','Value'), ['id','code','discount_type','discount_value','max_uses'], 'code')) ?></th>
-              <th><?= $C(AdminQuery::sortLink('max_uses', t('admin.max_uses','Max Uses'), ['id','code','discount_type','discount_value','max_uses'], 'code')) ?></th>
+              <th><?= AdminQuery::sortLink('discount_value', t('admin.value','Value'), ['id','code','discount_type','discount_value','max_uses'], 'code') ?></th>
+              <th><?= AdminQuery::sortLink('max_uses', t('admin.max_uses','Max Uses'), ['id','code','discount_type','discount_value','max_uses'], 'code') ?></th>
               <th><?= $C(t('admin.used','Used')) ?></th>
               <th><?= $C(t('admin.status')) ?></th>
               <th><?= $C(t('admin.actions')) ?></th>

@@ -69,10 +69,10 @@ $C = fn($v)=>htmlspecialchars((string)($v ?? ''));
         <div class="table-wrap">
           <table>
             <thead><tr>
-              <th><?= $C(AdminQuery::sortLink('slug', t('admin.slug'), ['id','slug','title','sort_order'], 'slug')) ?></th>
+              <th><?= AdminQuery::sortLink('slug', t('admin.slug'), ['id','slug','title','sort_order'], 'slug') ?></th>
               <th><?= $C(t('admin.title')) ?></th>
               <th><?= $C(t('admin.lang')) ?></th>
-              <th><?= $C(AdminQuery::sortLink('sort_order', t('admin.sort_order'), ['id','slug','title','sort_order'], 'slug')) ?></th>
+              <th><?= AdminQuery::sortLink('sort_order', t('admin.sort_order'), ['id','slug','title','sort_order'], 'slug') ?></th>
               <th><?= $C(t('admin.status')) ?></th>
               <th><?= $C(t('admin.actions')) ?></th>
             </tr></thead>

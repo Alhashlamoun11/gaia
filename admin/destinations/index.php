@@ -80,7 +80,7 @@ $C = fn($v)=>htmlspecialchars((string)($v ?? ''));
           <table>
             <thead><tr>
               <th><?= $C(t('admin.image')) ?></th>
-              <th><?= $C(AdminQuery::sortLink('name', t('admin.name'), ['id','name','country','sort_order'], 'name')) ?></th>
+              <th><?= AdminQuery::sortLink('name', t('admin.name'), ['id','name','country','sort_order'], 'name') ?></th>
               <th><?= $C(t('admin.country')) ?></th>
               <th><?= $C(t('admin.featured')) ?></th>
               <th><?= $C(t('admin.status')) ?></th>
